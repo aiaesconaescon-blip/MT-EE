@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบติดตามงานซ่อมคงค้าง - ช่างเจ | AESCON Maintenance GBH</title>
+  <!-- Google Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'Sarabun', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Prompt', 'Sarabun', sans-serif; }
+    /* SVG Map styling */
+    .province-path {
+      cursor: pointer;
+      transition: all 0.18s ease-in-out;
+      stroke: #94a3b8;
+      stroke-width: 0.8;
+      stroke-linejoin: round;
+    }
+    .province-path:hover {
+      filter: brightness(0.92);
+      stroke: #0284c7;
+      stroke-width: 2.5;
+      stroke-linejoin: round;
+    }
+    .province-path.selected {
+      stroke: #0284c7 !important;
+      stroke-width: 3.5 !important;
+      filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.7));
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <!-- SheetJS for Excel (.xlsx) Export -->
+  <script src="xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white shadow-md border-b border-sky-800/40 sticky top-0 z-40">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 bg-sky-500/20 border border-sky-400/40 rounded-xl flex items-center justify-center text-sky-400 font-bold text-xl shadow-inner">
+          <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight text-white">Dashboard งานซ่อมคงค้าง - ช่างเจ</h1>
+            <span class="bg-amber-400/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-400/40">Global House / AESCON</span>
+          </div>
+          <p class="text-xs text-sky-200/70 mt-0.5">ระบบติดตามสถานะงานซ่อมรายจังหวัด แยกตามหมวดหมู่และเลขแจ้งซ่อม</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2 text-sm">
+        <div class="text-xs text-slate-300 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>ข้อมูลล่าสุด: <span id="headerLastUpdated" class="text-white font-medium">-</span></span>
+        </div>
+        
+        <button id="btnSync" onclick="triggerSync()" class="bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm border border-sky-400/40 active:scale-95">
+          <svg class="w-4 h-4" id="syncIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>ซิงค์ Google Sheet</span>
+        </button>
+
+        <!-- Export Excel Button -->
+        <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm border border-emerald-500/50 active:scale-95">
+          <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>ส่งออก Excel (.xlsx)</span>
+        </button>
+
+        <button onclick="exportData()" title="ส่งออก JSON สำรอง" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition border border-slate-700 active:scale-95">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>JSON</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col gap-5">
+    
+    <!-- STATS OVERVIEW CARDS -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <!-- Total Pending -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">งานค้างทั้งหมด</span>
+          <span class="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold text-xs">📋</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiTotalPending" class="text-2xl font-bold text-slate-800">0</span>
+          <span class="text-xs text-slate-400">รายการ</span>
+        </div>
+      </div>
+
+      <!-- Provinces With Pending -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">จังหวัดที่ค้าง</span>
+          <span class="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-xs">🗺️</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiTotalProvinces" class="text-2xl font-bold text-sky-700">0</span>
+          <span class="text-xs text-slate-400">/ 77 จ.</span>
+        </div>
+      </div>
+
+      <!-- Status: Wait BOQ -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">รอประเมินBOQ</span>
+          <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">⏳</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiWaitBOQ" class="text-2xl font-bold text-blue-600">0</span>
+          <span class="text-xs text-slate-400">รายการ</span>
+        </div>
+      </div>
+
+      <!-- Status: Wait Action -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">รอดำเนินการ</span>
+          <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-xs">⚙️</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiWaitAction" class="text-2xl font-bold text-amber-600">0</span>
+          <span class="text-xs text-slate-400">รายการ</span>
+        </div>
+      </div>
+
+      <!-- Status: Wait Quote -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">รอใบเสนอราคา</span>
+          <span class="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs">📄</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiWaitQuote" class="text-2xl font-bold text-purple-600">0</span>
+          <span class="text-xs text-slate-400">รายการ</span>
+        </div>
+      </div>
+
+      <!-- Contractors Filled -->
+      <div class="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500">ระบุ ผรม. แล้ว</span>
+          <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">👷</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1">
+          <span id="kpiContractorAssigned" class="text-2xl font-bold text-emerald-600">0</span>
+          <span class="text-xs text-slate-400">รายการ</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKSPACE SPLIT: LEFT MAP / RIGHT TASKS -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
+
+      <!-- LEFT COLUMN: MAP & PROVINCE SELECTOR (5 COLS) -->
+      <div class="lg:col-span-5 flex flex-col gap-3">
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col gap-3">
+          
+          <!-- Map Header & Region Filter -->
+          <div class="flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-base font-bold text-slate-800">แผนที่ประเทศไทย (77 จังหวัด)</span>
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">คลิกเลือกจังหวัด</span>
+              </div>
+              <button onclick="resetSelectedProvince()" class="text-xs text-sky-600 hover:text-sky-800 font-medium flex items-center gap-1">
+                <span>แสดงทุกจังหวัด</span>
+              </button>
+            </div>
+
+            <!-- Search Province -->
+            <div class="relative">
+              <input type="text" id="provinceSearch" placeholder="🔍 พิมพ์ค้นหาจังหวัด (เช่น ขอนแก่น, เชียงใหม่)..." 
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                oninput="filterProvincesList(this.value)">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <!-- Region Filter Pills -->
+            <div class="flex items-center gap-1.5 flex-wrap text-xs">
+              <button onclick="filterRegion('all')" class="region-pill active px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 font-semibold border border-sky-300">ทั้งหมด</button>
+              <button onclick="filterRegion('เหนือ')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">เหนือ</button>
+              <button onclick="filterRegion('อีสาน')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">อีสาน</button>
+              <button onclick="filterRegion('กลาง')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">กลาง/ตต.</button>
+              <button onclick="filterRegion('ตะวันออก')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">ตะวันออก</button>
+              <button onclick="filterRegion('ใต้')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">ใต้</button>
+            </div>
+          </div>
+
+          <!-- MAP CONTAINER -->
+          <div class="relative bg-gradient-to-b from-sky-50/50 via-slate-50 to-sky-50/30 border border-slate-200/80 rounded-xl p-3 flex items-center justify-center overflow-hidden min-h-[640px]">
+            <!-- Tooltip -->
+            <div id="mapTooltip" class="absolute pointer-events-none opacity-0 transition-opacity bg-slate-900/95 backdrop-blur-sm text-white px-3.5 py-2.5 rounded-xl text-xs shadow-2xl z-30 border border-slate-700/60 max-w-[220px]">
+              <div id="tooltipName" class="font-bold text-sky-300 text-sm"></div>
+              <div id="tooltipCount" class="text-slate-200 mt-1"></div>
+              <div id="tooltipBranches" class="text-[11px] text-slate-300 mt-1"></div>
+            </div>
+
+            <!-- SVG Thailand -->
+            <svg id="thailandSvg" viewBox="0 0 560 960" class="w-full h-auto max-h-[720px] select-none filter drop-shadow-sm">
+              <!-- Paths will be injected dynamically -->
+            </svg>
+
+            <!-- Map Heatmap Legend -->
+            <div class="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm p-2.5 rounded-xl border border-slate-200 shadow-md text-[11px] flex flex-col gap-1.5 z-10">
+              <span class="font-bold text-slate-700">จำนวนงานค้าง</span>
+              <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#e2e8f0] border border-slate-300"></span> <span class="text-slate-500">0 งาน</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#fef08a] border border-amber-300"></span> <span class="text-slate-700 font-medium">1 - 4 งาน</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#fdba74] border border-orange-300"></span> <span class="text-slate-700 font-medium">5 - 9 งาน</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#fb923c] border border-orange-500"></span> <span class="text-slate-700 font-medium">10 - 15 งาน</span></div>
+              <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#ef4444] border border-red-600"></span> <span class="text-red-700 font-bold">> 15 งาน</span></div>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
+              <button onclick="zoomMap(1.2)" class="w-8 h-8 bg-white hover:bg-slate-100 rounded-lg shadow-md border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-base active:scale-95">+</button>
+              <button onclick="zoomMap(0.8)" class="w-8 h-8 bg-white hover:bg-slate-100 rounded-lg shadow-md border border-slate-200 flex items-center justify-center font-bold text-slate-700 text-base active:scale-95">-</button>
+              <button onclick="resetMapZoom()" title="รีเซ็ตขนาด" class="w-8 h-8 bg-white hover:bg-slate-100 rounded-lg shadow-md border border-slate-200 flex items-center justify-center text-slate-700 text-sm active:scale-95">⟲</button>
+            </div>
+          </div>
+
+          <!-- Top Provinces Quick Buttons -->
+          <div class="mt-1">
+            <div class="text-xs font-semibold text-slate-600 mb-1.5 flex items-center justify-between">
+              <span>⚡ จังหวัดที่มีงานค้างสูงสุด (คลิกด่วน):</span>
+              <span class="text-[11px] text-slate-400">เรียงตามจำนวน</span>
+            </div>
+            <div id="topProvincesBadges" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto custom-scrollbar p-1">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: PROVINCE TASKS LIST (7 COLS) -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        
+        <!-- Active Province Banner & Filter -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-xl font-bold">
+                📍
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 id="activeProvinceTitle" class="text-xl font-bold text-slate-900">ทุกจังหวัด (ภาพรวม)</h2>
+                  <span id="activeProvinceBadge" class="bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-200">
+                    396 งาน
+                  </span>
+                </div>
+                <p id="activeProvinceSubtitle" class="text-xs text-slate-500 mt-0.5">
+                  สาขา: แสดงงานค้างทุกสาขาของช่างเจ
+                </p>
+              </div>
+            </div>
+
+            <!-- View Toggles / Sort Notice -->
+            <div class="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+              <span>เรียง: <b>แยกตามหมวดหมู่</b> ➔ <b>เลขแจ้งซ่อมน้อยไปมาก</b></span>
+            </div>
+          </div>
+
+          <!-- Secondary Filters: Search & Status -->
+          <div class="flex flex-wrap items-center justify-between gap-2.5">
+            <div class="flex-1 min-w-[200px] relative">
+              <input type="text" id="taskSearchInput" placeholder="🔍 ค้นหาเลขที่ No., JOB NO., ลักษณะงาน, หรือสาขา..."
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                oninput="filterTasks()">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <div class="flex items-center gap-1 text-xs">
+              <button onclick="filterStatus('all')" class="status-btn active px-2.5 py-1.5 rounded-lg bg-sky-100 text-sky-800 font-semibold border border-sky-300">ทุกสถานะ</button>
+              <button onclick="filterStatus('รอประเมินBOQ')" class="status-btn px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">รอประเมินBOQ</button>
+              <button onclick="filterStatus('รอดำเนินการ')" class="status-btn px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">รอดำเนินการ</button>
+              <button onclick="filterStatus('รอใบเสนอราคา')" class="status-btn px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">รอใบเสนอราคา</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TASKS LIST CONTAINER ACCORDION -->
+        <div id="tasksContainer" class="flex flex-col gap-4">
+          <!-- Dynamically generated category groups and task cards -->
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL: TASK DETAIL & CONTRACTOR / RESPONSIBLE EDITOR -->
+  <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden transition-opacity">
+    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-slate-900 to-sky-950 text-white p-4 sm:px-6 flex items-center justify-between border-b border-sky-800/40">
+        <div class="flex items-center gap-3">
+          <span class="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400 font-bold">
+            📝
+          </span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="modalJobTitle" class="text-lg font-bold text-white">รายละเอียดงานซ่อม</h3>
+              <span id="modalJobStatusBadge" class="text-xs px-2.5 py-0.5 rounded-full font-bold"></span>
+            </div>
+            <p id="modalJobBranch" class="text-xs text-sky-200 mt-0.5"></p>
+          </div>
+        </div>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5 flex-1 bg-slate-50/50">
+        
+        <!-- Job Details Grid from Sheet -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+          <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            ข้อมูลแจ้งซ่อมจากระบบ
+          </h4>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">เลขแจ้งซ่อม (No. ที่):</span>
+              <span id="modalNo" class="font-bold text-slate-800 text-sm">-</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">JOB NO.:</span>
+              <span id="modalJobNo" class="font-bold text-sky-700 text-sm">-</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">วันที่รับเอกสาร:</span>
+              <span id="modalDate" class="font-semibold text-slate-800">-</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">เขต / สาขา:</span>
+              <span id="modalZoneBranch" class="font-semibold text-slate-800">-</span>
+            </div>
+          </div>
+
+          <!-- Category & Nature -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">หมวดหมู่งาน / ประเภท:</span>
+              <span id="modalCategory" class="font-semibold text-slate-800">-</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">ลักษณะงาน:</span>
+              <span id="modalNature" class="font-semibold text-slate-800">-</span>
+            </div>
+          </div>
+
+          <!-- Problem Description -->
+          <div class="bg-sky-50/50 p-3 rounded-xl border border-sky-100 text-xs">
+            <span class="text-sky-800 font-bold block mb-1">รายละเอียดงาน / ปัญหาที่แจ้ง:</span>
+            <p id="modalDesc" class="text-slate-700 leading-relaxed whitespace-pre-line">-</p>
+          </div>
+
+          <!-- Quotation & Budget -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">ใบเสนอราคา:</span>
+              <span id="modalQuote" class="font-medium text-slate-700">-</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">BUDGET (THB):</span>
+              <span id="modalBudget" class="font-medium text-slate-700">-</span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <span class="text-slate-400 block">TENDER (THB):</span>
+              <span id="modalTender" class="font-medium text-slate-700">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDITABLE FORM SECTION (ผู้รับผิดชอบ, ผรม., บันทึกความคืบหน้า) -->
+        <div class="bg-white p-4 sm:p-5 rounded-xl border-2 border-sky-300 shadow-sm flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h4 class="text-sm font-bold text-sky-900 flex items-center gap-2">
+              <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              <span>กรอกข้อมูลและบันทึกการมอบหมายงาน</span>
+            </h4>
+            <span class="text-[11px] bg-sky-100 text-sky-800 font-medium px-2 py-0.5 rounded-full">บันทึกอัตโนมัติ</span>
+          </div>
+
+          <form id="taskEditForm" onsubmit="saveTaskEdits(event)" class="flex flex-col gap-3.5">
+            <input type="hidden" id="editJobId">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <!-- ผู้รับผิดชอบ -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  👤 ผู้รับผิดชอบงาน
+                </label>
+                <input type="text" id="inputResponsible" 
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  placeholder="เช่น ช่างเจ, ช่างเบศ...">
+              </div>
+
+              <!-- ชื่อ ผรม. ที่เข้าดำเนินการ -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  👷 ชื่อ ผรม. ที่เข้าดำเนินการ <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="inputContractor" 
+                  class="w-full px-3 py-2 bg-amber-50/50 border border-amber-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white transition"
+                  placeholder="เช่น หจก. นครพนมการช่าง, ช่างสมพงษ์...">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <!-- สถานะหน้างาน / ความคืบหน้า -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  📊 สถานะหน้างาน / การดำเนินการ
+                </label>
+                <input type="text" id="inputSiteStatus" list="siteStatusOptions"
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  placeholder="เลือกหรือพิมพ์สถานะ เช่น ผรม.เข้าดูหน้างานแล้ว">
+                <datalist id="siteStatusOptions">
+                  <option value="รอ ผรม. เข้าดูหน้างาน"></option>
+                  <option value="ผรม. เข้าดูหน้างานแล้ว - รอราคา"></option>
+                  <option value="กำลังจัดทำ BOQ"></option>
+                  <option value="อนุมัติแล้ว - ผรม. เตรียมเข้าทำ"></option>
+                  <option value="ผรม. กำลังเข้าดำเนินการ"></option>
+                  <option value="งานเสร็จสิ้น - รอส่งเอกสาร"></option>
+                  <option value="สาขาดำเนินการเอง"></option>
+                </datalist>
+              </div>
+
+              <!-- เบอร์ติดต่อ ผรม. หรือข้อความสรุป -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  📞 ช่องทางติดต่อ ผรม. / วันนัดหมาย
+                </label>
+                <input type="text" id="inputContractorContact" 
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  placeholder="เช่น โทร 081-xxx-xxxx, นัดเข้า 20 มี.ค.">
+              </div>
+            </div>
+
+            <!-- หมายเหตุเพิ่มเติม / รายละเอียดการประสานงาน -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                📝 หมายเหตุเพิ่มเติม / บันทึกการประสานงาน
+              </label>
+              <textarea id="inputNotes" rows="3"
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                placeholder="กรอกบันทึกเพิ่มเติม เช่น รายละเอียดข้อตกลงกับ ผรม., ปัญหาอุปสรรค, อะไหล่ที่ต้องสั่ง..."></textarea>
+            </div>
+
+            <!-- Save Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button type="button" onclick="closeModal()" 
+                class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition">
+                ยกเลิก
+              </button>
+              <button type="submit" 
+                class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow-sm active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                <span>บันทึกข้อมูล (Save)</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">บันทึกสำเร็จ</span>
+  </div>
+
+  <!-- LOAD JAVASCRIPT ASSETS -->
+  <!-- 1. Embedded Data & Map Fallback -->
+  <script src="data.js"></script>
+  <script src="thailand_map.js"></script>
+
+  <!-- 2. Application Logic -->
+  <script>
+    // Region mappings for Thai provinces
+    const REGIONS = {
+      'เหนือ': ['เชียงใหม่', 'เชียงราย', 'ลำปาง', 'ลำพูน', 'แม่ฮ่องสอน', 'น่าน', 'พะเยา', 'แพร่', 'อุตรดิตถ์'],
+      'อีสาน': ['ขอนแก่น', 'อุดรธานี', 'นครราชสีมา', 'อุบลราชธานี', 'หนองคาย', 'บึงกาฬ', 'สกลนคร', 'นครพนม', 'มุกดาหาร', 'กาฬสินธุ์', 'มหาสารคาม', 'ร้อยเอ็ด', 'ยโสธร', 'อำนาจเจริญ', 'บุรีรัมย์', 'สุรินทร์', 'ศรีสะเกษ', 'เลย', 'หนองบัวลำภู', 'ชัยภูมิ'],
+      'กลาง': ['กรุงเทพมหานคร', 'นนทบุรี', 'ปทุมธานี', 'พระนครศรีอยุธยา', 'อ่างทอง', 'ลพบุรี', 'สิงห์บุรี', 'ชัยนาท', 'สระบุรี', 'นครสวรรค์', 'อุทัยธานี', 'กำแพงเพชร', 'ตาก', 'สุโขทัย', 'พิษณุโลก', 'พิจิตร', 'เพชรบูรณ์', 'สุพรรณบุรี', 'นครปฐม', 'สมุทรสาคร', 'สมุทรสงคราม', 'สมุทรปราการ', 'กาญจนบุรี', 'ราชบุรี', 'เพชรบุรี', 'ประจวบคีรีขันธ์'],
+      'ตะวันออก': ['ชลบุรี', 'ระยอง', 'จันทบุรี', 'ตราด', 'ฉะเชิงเทรา', 'ปราจีนบุรี', 'นครนายก', 'สระแก้ว'],
+      'ใต้': ['นครศรีธรรมราช', 'กระบี่', 'พังงา', 'ภูเก็ต', 'สุราษฎร์ธานี', 'ระนอง', 'ชุมพร', 'สงขลา', 'สตูล', 'ตรัง', 'พัทลุง', 'ปัตตานี', 'ยะลา', 'นราธิวาส']
+    };
+
+    let appData = null;
+    let selectedProvince = null; // null = all provinces
+    let currentStatusFilter = 'all';
+    let currentRegionFilter = 'all';
+    let activeJob = null;
+    let customEdits = {}; // Saved locally or from backend
+
+    // Load edits from localStorage
+    try {
+      const saved = localStorage.getItem('GBH_JAY_JOB_EDITS');
+      if (saved) {
+        customEdits = JSON.parse(saved);
+      }
+    } catch(e) { console.warn('Could not read localStorage', e); }
+
+    // Init function
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Load data (prefer fresh data.json with cache-busting when on http)
+      let loadedFresh = false;
+      if (window.location.protocol.startsWith('http')) {
+        try {
+          const res = await fetch(`data.json?_t=${Date.now()}`, { cache: 'no-store' });
+          if (res.ok) {
+            appData = await res.json();
+            loadedFresh = true;
+          }
+        } catch(e) { /* fallback */ }
+      }
+      if (!loadedFresh) {
+        if (window.DASHBOARD_DATA) {
+          appData = window.DASHBOARD_DATA;
+        } else {
+          try {
+            const res = await fetch('data.json');
+            if (res.ok) appData = await res.json();
+          } catch(e) { console.error('Failed to fetch data.json', e); }
+        }
+      }
+
+      if (!appData) {
+        alert('ไม่พบข้อมูล กรุณารัน data_processor.py ก่อน');
+        return;
+      }
+
+      // Merge custom edits
+      mergeCustomEdits();
+
+      // Render KPIs
+      renderKPIs();
+
+      // Render Map
+      renderThailandMap();
+
+      // Render Top Provinces quick buttons
+      renderTopProvincesBadges();
+
+      // Render Task list for default (All or Khon Kaen)
+      renderTaskList();
+    });
+
+    function mergeCustomEdits() {
+      if (!appData || !appData.all_pending_jobs) return;
+      appData.all_pending_jobs.forEach(job => {
+        if (customEdits[job.id]) {
+          const ed = customEdits[job.id];
+          if (ed.custom_responsible !== undefined) job.custom_responsible = ed.custom_responsible;
+          if (ed.custom_contractor !== undefined) job.custom_contractor = ed.custom_contractor;
+          if (ed.custom_notes !== undefined) job.custom_notes = ed.custom_notes;
+          if (ed.custom_site_status !== undefined) job.custom_site_status = ed.custom_site_status;
+          if (ed.custom_contact !== undefined) job.custom_contact = ed.custom_contact;
+        }
+      });
+    }
+
+    function renderKPIs() {
+      document.getElementById('headerLastUpdated').textContent = appData.last_updated || 'วันนี้';
+      document.getElementById('kpiTotalPending').textContent = (appData.all_pending_jobs || []).length;
+      
+      // Provinces with pending
+      const provs = new Set(appData.all_pending_jobs.map(j => j.province));
+      document.getElementById('kpiTotalProvinces').textContent = provs.size;
+
+      // Status breakdown
+      const stats = {};
+      let contractorCount = 0;
+      appData.all_pending_jobs.forEach(j => {
+        stats[j.status] = (stats[j.status] || 0) + 1;
+        if (j.custom_contractor && j.custom_contractor.trim()) {
+          contractorCount++;
+        }
+      });
+
+      document.getElementById('kpiWaitBOQ').textContent = stats['รอประเมินBOQ'] || 0;
+      document.getElementById('kpiWaitAction').textContent = stats['รอดำเนินการ'] || 0;
+      document.getElementById('kpiWaitQuote').textContent = stats['รอใบเสนอราคา'] || 0;
+      document.getElementById('kpiContractorAssigned').textContent = contractorCount;
+    }
+
+    function getProvinceColor(count) {
+      if (!count || count === 0) return '#e2e8f0'; // Gray
+      if (count <= 4) return '#fef08a'; // Yellow
+      if (count <= 9) return '#fdba74'; // Light orange
+      if (count <= 15) return '#fb923c'; // Dark orange
+      return '#ef4444'; // Red
+    }
+
+    function renderThailandMap() {
+      if (!window.THAILAND_MAP_DATA) return;
+      const svg = document.getElementById('thailandSvg');
+      if (window.THAILAND_MAP_DATA.viewBox) {
+        svg.setAttribute('viewBox', window.THAILAND_MAP_DATA.viewBox);
+      }
+      svg.innerHTML = '';
+
+      // Count tasks per province
+      const counts = {};
+      const branchesByProv = {};
+      appData.all_pending_jobs.forEach(j => {
+        counts[j.province] = (counts[j.province] || 0) + 1;
+        if (!branchesByProv[j.province]) branchesByProv[j.province] = new Set();
+        if (j.branch) branchesByProv[j.province].add(j.branch);
+      });
+
+      window.THAILAND_MAP_DATA.provinces.forEach(p => {
+        const count = counts[p.name_th] || 0;
+        const color = getProvinceColor(count);
+        const branches = Array.from(branchesByProv[p.name_th] || []).join(', ');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', p.d);
+        path.setAttribute('id', `prov-${p.name_th}`);
+        path.setAttribute('class', 'province-path');
+        path.setAttribute('fill', color);
+        path.setAttribute('data-name', p.name_th);
+        path.setAttribute('data-count', count);
+        path.setAttribute('data-branches', branches);
+
+        // Tooltip interaction
+        path.addEventListener('mousemove', (e) => showTooltip(e, p.name_th, count, branches));
+        path.addEventListener('mouseleave', hideTooltip);
+        path.addEventListener('click', () => selectProvince(p.name_th));
+
+        svg.appendChild(path);
+      });
+    }
+
+    const tooltip = document.getElementById('mapTooltip');
+    const ttName = document.getElementById('tooltipName');
+    const ttCount = document.getElementById('tooltipCount');
+    const ttBranches = document.getElementById('tooltipBranches');
+
+    function showTooltip(e, name, count, branches) {
+      ttName.textContent = name;
+      ttCount.innerHTML = `งานค้าง: <span class="font-bold text-amber-300 text-sm">${count}</span> รายการ`;
+      ttBranches.textContent = branches ? `สาขา: ${branches}` : 'ไม่มีสาขาในพื้นที่';
+      
+      tooltip.style.left = `${e.clientX + 14}px`;
+      tooltip.style.top = `${e.clientY - 14}px`;
+      tooltip.style.position = 'fixed';
+      tooltip.classList.remove('opacity-0');
+    }
+
+    function hideTooltip() {
+      tooltip.classList.add('opacity-0');
+    }
+
+    function selectProvince(provinceName) {
+      selectedProvince = provinceName;
+
+      // Update map highlight
+      document.querySelectorAll('.province-path').forEach(el => {
+        if (el.getAttribute('data-name') === provinceName) {
+          el.classList.add('selected');
+        } else {
+          el.classList.remove('selected');
+        }
+      });
+
+      // Update active banner
+      const provJobs = appData.all_pending_jobs.filter(j => j.province === provinceName);
+      const branches = Array.from(new Set(provJobs.map(j => j.branch))).filter(Boolean);
+
+      document.getElementById('activeProvinceTitle').textContent = `จังหวัด${provinceName}`;
+      document.getElementById('activeProvinceBadge').textContent = `${provJobs.length} งานค้าง`;
+      document.getElementById('activeProvinceSubtitle').textContent = branches.length > 0 
+        ? `สาขาที่พบงานค้าง: ${branches.join(', ')}`
+        : 'ไม่พบสาขาที่มีงานค้าง';
+
+      renderTaskList();
+    }
+
+    function resetSelectedProvince() {
+      selectedProvince = null;
+      document.querySelectorAll('.province-path').forEach(el => el.classList.remove('selected'));
+      document.getElementById('activeProvinceTitle').textContent = 'ทุกจังหวัด (ภาพรวม)';
+      document.getElementById('activeProvinceBadge').textContent = `${appData.all_pending_jobs.length} งาน`;
+      document.getElementById('activeProvinceSubtitle').textContent = 'สาขา: แสดงงานค้างทุกสาขาของช่างเจ';
+      renderTaskList();
+    }
+
+    function renderTopProvincesBadges() {
+      const container = document.getElementById('topProvincesBadges');
+      container.innerHTML = '';
+
+      const counts = {};
+      appData.all_pending_jobs.forEach(j => {
+        counts[j.province] = (counts[j.province] || 0) + 1;
+      });
+
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+      sorted.forEach(([pName, cnt]) => {
+        const btn = document.createElement('button');
+        btn.className = 'text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-100 hover:text-sky-800 text-slate-700 font-medium flex items-center gap-1.5 transition border border-slate-200';
+        btn.innerHTML = `<span>${pName}</span> <span class="bg-red-500 text-white font-bold text-[10px] px-1.5 py-0.2 rounded-full">${cnt}</span>`;
+        btn.onclick = () => selectProvince(pName);
+        container.appendChild(btn);
+      });
+    }
+
+    // Filter by Region on Map
+    function filterRegion(regionKey) {
+      currentRegionFilter = regionKey;
+      document.querySelectorAll('.region-pill').forEach(b => b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300'));
+      event.target.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+
+      const svgPaths = document.querySelectorAll('.province-path');
+      svgPaths.forEach(p => {
+        const pName = p.getAttribute('data-name');
+        if (regionKey === 'all') {
+          p.style.opacity = '1';
+        } else {
+          const list = REGIONS[regionKey] || [];
+          p.style.opacity = list.includes(pName) ? '1' : '0.15';
+        }
+      });
+    }
+
+    function filterProvincesList(query) {
+      if (!query.trim()) {
+        document.querySelectorAll('.province-path').forEach(p => p.style.opacity = '1');
+        return;
+      }
+      const q = query.trim().toLowerCase();
+      document.querySelectorAll('.province-path').forEach(p => {
+        const name = p.getAttribute('data-name').toLowerCase();
+        if (name.includes(q)) {
+          p.style.opacity = '1';
+        } else {
+          p.style.opacity = '0.15';
+        }
+      });
+    }
+
+    // Filter Status buttons
+    function filterStatus(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300'));
+      event.target.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+      renderTaskList();
+    }
+
+    function filterTasks() {
+      renderTaskList();
+    }
+
+    // RENDER TASK LIST (GROUPED BY CATEGORY, SORTED BY NO. ASC)
+    function renderTaskList() {
+      const container = document.getElementById('tasksContainer');
+      container.innerHTML = '';
+
+      const query = (document.getElementById('taskSearchInput').value || '').trim().toLowerCase();
+
+      // 1. Filter jobs
+      let jobs = appData.all_pending_jobs;
+      if (selectedProvince) {
+        jobs = jobs.filter(j => j.province === selectedProvince);
+      }
+      if (currentStatusFilter !== 'all') {
+        jobs = jobs.filter(j => j.status === currentStatusFilter);
+      }
+      if (query) {
+        jobs = jobs.filter(j => 
+          (j.no && j.no.toLowerCase().includes(query)) ||
+          (j.job_no && j.job_no.toLowerCase().includes(query)) ||
+          (j.branch && j.branch.toLowerCase().includes(query)) ||
+          (j.nature && j.nature.toLowerCase().includes(query)) ||
+          (j.desc && j.desc.toLowerCase().includes(query)) ||
+          (j.custom_contractor && j.custom_contractor.toLowerCase().includes(query))
+        );
+      }
+
+      if (jobs.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm flex flex-col items-center justify-center gap-2">
+            <span class="text-4xl">🎉</span>
+            <span class="text-base font-bold text-slate-800">ไม่มีงานค้างตามเงื่อนไขที่เลือก</span>
+            <p class="text-xs text-slate-400">เลือกจังหวัดอื่น หรือเปลี่ยนตัวกรองค้นหา</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 2. Group by Category
+      const grouped = {};
+      jobs.forEach(j => {
+        const cat = j.category || 'งานทั่วไป/อื่นๆ';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(j);
+      });
+
+      // 3. For each category, sort by no_num ascending (CRITICAL REQUIREMENT)
+      Object.keys(grouped).forEach(cat => {
+        grouped[cat].sort((a, b) => {
+          if (a.no_num !== b.no_num) return a.no_num - b.no_num;
+          return a.no.localeCompare(b.no);
+        });
+      });
+
+      // 4. Sort categories by size (or alphabetically)
+      const sortedCats = Object.keys(grouped).sort((a, b) => grouped[b].length - grouped[a].length);
+
+      sortedCats.forEach((catName, idx) => {
+        const catJobs = grouped[catName];
+        
+        const catSection = document.createElement('div');
+        catSection.className = 'bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden';
+
+        // Accordion Header
+        catSection.innerHTML = `
+          <div class="p-3.5 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between cursor-pointer select-none" onclick="toggleCatGroup('cat-group-${idx}')">
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-sky-600 text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                📁
+              </span>
+              <span class="font-bold text-slate-800 text-sm sm:text-base">${catName}</span>
+              <span class="bg-sky-100 text-sky-800 font-bold text-xs px-2.5 py-0.5 rounded-full border border-sky-200">
+                ${catJobs.length} งาน
+              </span>
+            </div>
+            <span id="cat-arrow-${idx}" class="text-slate-400 text-xs font-bold transition-transform">▼</span>
+          </div>
+
+          <div id="cat-group-${idx}" class="p-3.5 flex flex-col gap-3">
+            <!-- Task cards will be inserted here -->
+          </div>
+        `;
+
+        const cardsContainer = catSection.querySelector(`#cat-group-${idx}`);
+
+        catJobs.forEach(job => {
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-sm hover:border-sky-400 hover:shadow-md transition flex flex-col gap-2.5 group cursor-pointer';
+          card.onclick = () => openModal(job);
+
+          // Status Badge Color
+          let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+          if (job.status === 'รอประเมินBOQ') statusBadgeClass = 'bg-blue-50 text-blue-700 border-blue-200 font-semibold';
+          else if (job.status === 'รอดำเนินการ') statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200 font-semibold';
+          else if (job.status === 'รอใบเสนอราคา') statusBadgeClass = 'bg-purple-50 text-purple-700 border-purple-200 font-semibold';
+
+          // Contractor badge
+          const hasContractor = job.custom_contractor && job.custom_contractor.trim();
+          const contractorTag = hasContractor
+            ? `<span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-md font-semibold border border-emerald-200">👷 ${job.custom_contractor}</span>`
+            : `<span class="bg-slate-50 text-slate-400 text-xs px-2 py-0.5 rounded-md border border-dashed border-slate-300">ยังไม่ระบุ ผรม.</span>`;
+
+          card.innerHTML = `
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="bg-sky-900 text-white font-bold text-xs px-2.5 py-1 rounded-lg tracking-wider">
+                  No. ${job.no || '-'}
+                </span>
+                ${job.job_no ? `<span class="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">JOB: ${job.job_no}</span>` : ''}
+                <span class="text-xs text-slate-500 font-medium">📍 สาขา${job.branch || job.province}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] text-slate-400">📅 ${job.date || '-'}</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full border ${statusBadgeClass}">${job.status}</span>
+              </div>
+            </div>
+
+            <!-- Nature & Problem Desc -->
+            <div class="flex flex-col gap-1">
+              ${job.nature ? `<div class="text-xs font-bold text-slate-800">${job.nature}</div>` : ''}
+              <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed whitespace-pre-line">${job.desc || '-'}</p>
+            </div>
+
+            <!-- Card Footer: Responsible & Contractor -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-500 text-[11px]">ผู้รับผิดชอบ: <b class="text-slate-800">${job.custom_responsible || job.responsible || 'ช่างเจ'}</b></span>
+                ${contractorTag}
+              </div>
+              <span class="text-sky-600 text-xs font-semibold group-hover:translate-x-0.5 transition flex items-center gap-0.5">
+                ดูรายละเอียด/กรอกข้อมูล ➔
+              </span>
+            </div>
+          `;
+
+          cardsContainer.appendChild(card);
+        });
+
+        container.appendChild(catSection);
+      });
+    }
+
+    function toggleCatGroup(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.toggle('hidden');
+      }
+    }
+
+    // MODAL FUNCTIONS
+    function openModal(job) {
+      activeJob = job;
+      document.getElementById('editJobId').value = job.id;
+      document.getElementById('modalJobTitle').textContent = `ใบแจ้งซ่อม No. ${job.no} (${job.branch})`;
+      document.getElementById('modalJobBranch').textContent = `จังหวัด${job.province} | หมวดหมู่: ${job.category}`;
+
+      // Status badge in modal
+      const badge = document.getElementById('modalJobStatusBadge');
+      badge.textContent = job.status;
+      badge.className = 'text-xs px-2.5 py-0.5 rounded-full font-bold ' + 
+        (job.status === 'รอประเมินBOQ' ? 'bg-blue-400 text-blue-950' : 
+         job.status === 'รอดำเนินการ' ? 'bg-amber-400 text-amber-950' : 'bg-purple-400 text-purple-950');
+
+      // Fill sheet values
+      document.getElementById('modalNo').textContent = job.no || '-';
+      document.getElementById('modalJobNo').textContent = job.job_no || '-';
+      document.getElementById('modalDate').textContent = job.date || '-';
+      document.getElementById('modalZoneBranch').textContent = `${job.zone || '-'} / สาขา${job.branch}`;
+      document.getElementById('modalCategory').textContent = job.category || '-';
+      document.getElementById('modalNature').textContent = job.nature || '-';
+      document.getElementById('modalDesc').textContent = job.desc || '-';
+      document.getElementById('modalQuote').textContent = job.quotation || '-';
+      document.getElementById('modalBudget').textContent = job.budget || '-';
+      document.getElementById('modalTender').textContent = job.tender || '-';
+
+      // Fill editable inputs
+      document.getElementById('inputResponsible').value = job.custom_responsible || job.responsible || 'ช่างเจ';
+      document.getElementById('inputContractor').value = job.custom_contractor || job.operator || '';
+      document.getElementById('inputSiteStatus').value = job.custom_site_status || job.site_status || '';
+      document.getElementById('inputContractorContact').value = job.custom_contact || '';
+      document.getElementById('inputNotes').value = job.custom_notes || '';
+
+      // Show modal
+      document.getElementById('taskModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('taskModal').classList.add('hidden');
+      activeJob = null;
+    }
+
+    // Save Edits
+    async function saveTaskEdits(e) {
+      e.preventDefault();
+      if (!activeJob) return;
+
+      const jobId = document.getElementById('editJobId').value;
+      const resp = document.getElementById('inputResponsible').value.trim();
+      const contractor = document.getElementById('inputContractor').value.trim();
+      const siteStat = document.getElementById('inputSiteStatus').value.trim();
+      const contact = document.getElementById('inputContractorContact').value.trim();
+      const notes = document.getElementById('inputNotes').value.trim();
+
+      const editData = {
+        custom_responsible: resp,
+        custom_contractor: contractor,
+        custom_site_status: siteStat,
+        custom_contact: contact,
+        custom_notes: notes,
+        updated_at: new Date().toISOString()
+      };
+
+      customEdits[jobId] = editData;
+
+      // Update in memory
+      activeJob.custom_responsible = resp;
+      activeJob.custom_contractor = contractor;
+      activeJob.custom_site_status = siteStat;
+      activeJob.custom_contact = contact;
+      activeJob.custom_notes = notes;
+
+      // Save to localStorage
+      try {
+        localStorage.setItem('GBH_JAY_JOB_EDITS', JSON.stringify(customEdits));
+      } catch(err) { console.warn(err); }
+
+      // Try sending to local Python server if available
+      try {
+        await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId, editData })
+        });
+      } catch(err) {
+        // Standalone offline mode, no server running is fine!
+      }
+
+      showToast('บันทึกข้อมูล ผรม. และผู้รับผิดชอบ เรียบร้อยแล้ว!');
+      closeModal();
+      renderKPIs();
+      renderTaskList();
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    
+    // Branch to Province Mapping
+    const BRANCH_TO_PROVINCE_MAP = {
+      "กระทุ่มแบน": "สมุทรสาคร", "กบินทร์บุรี": "ปราจีนบุรี", "กันทรลักษ์": "ศรีสะเกษ",
+      "กุฉินารายณ์": "กาฬสินธุ์", "ชุมแพ": "ขอนแก่น", "ด่านขุนทด": "นครราชสีมา",
+      "ตระการพืชผล": "อุบลราชธานี", "เดชอุดม(อุบลราชธานี)": "อุบลราชธานี",
+      "นางรอง (บุรีรัมย์)": "บุรีรัมย์", "ลำปลายมาศ": "บุรีรัมย์",
+      "บ้านดุง (อุดรธานี)": "อุดรธานี", "บ้านตาด (อุดรธานี)": "อุดรธานี",
+      "บ้านไผ่(ขอนแก่น)": "ขอนแก่น", "ปทุมธานี 1": "ปทุมธานี",
+      "ปทุมธานี 1-โรงน้ำดื่ม": "ปทุมธานี", "ปราณบุรี": "ประจวบคีรีขันธ์",
+      "ฝาง (เชียงใหม่)": "เชียงใหม่", "พยัคฆภูมิพิสัย": "มหาสารคาม",
+      "พรเจริญ": "บึงกาฬ", "พังโคน": "สกลนคร", "พาน (เชียงราย)": "เชียงราย",
+      "พิมาย": "นครราชสีมา", "โชคชัย": "นครราชสีมา", "ลาดยาว (นครสวรรค์)": "นครสวรรค์",
+      "ลำนารายณ์": "ลพบุรี", "วังทอง": "พิษณุโลก", "วังน้อย-CDC": "พระนครศรีอยุธยา",
+      "อยุธยา": "พระนครศรีอยุธยา", "ศาลายา": "นครปฐม", "สมุย": "สุราษฎร์ธานี",
+      "สมเด็จ (กาฬสินธุ์)": "กาฬสินธุ์", "สวรรคโลก": "สุโขทัย",
+      "สว่างแดนดิน": "สกลนคร", "หนองหาน (อุดรธานี)": "อุดรธานี",
+      "เวียงกุมกาม (เชียงใหม่)": "เชียงใหม่", "เวียงป่าเป้า": "เชียงราย",
+      "เวียงสา (น่าน)": "น่าน", "แปลงยาว": "ฉะเชิงเทรา", "แม่สอด (ตาก)": "ตาก",
+      "แม่สาย (เชียงราย)": "เชียงราย", "โพนทอง": "ร้อยเอ็ด", "โพนพิสัย": "หนองคาย",
+      "ไทรน้อย(นนทบุรี)": "นนทบุรี", "The nine-ติวานนท์": "นนทบุรี",
+      "เทพารักษ์": "สมุทรปราการ", "เลิงนกทา": "ยโสธร", "กระนวน (ขอนแก่น)": "ขอนแก่น",
+      "จะนะ (สงขลา)": "สงขลา", "TPPโฮมช็อปสุวรรณภูมิ": "สมุทรปราการ",
+      "Micron": "กรุงเทพมหานคร", "SGE": "กรุงเทพมหานคร",
+      "พนมเปญ": "ต่างประเทศ (กัมพูชา)", "พระตะบอง": "ต่างประเทศ (กัมพูชา)", "-": "ไม่ระบุ"
+    };
+
+    const ALL_77_PROVINCES = [
+      "กรุงเทพมหานคร", "สมุทรปราการ", "นนทบุรี", "ปทุมธานี", "พระนครศรีอยุธยา", "อ่างทอง", "ลพบุรี", "สิงห์บุรี", "ชัยนาท", "สระบุรี",
+      "ชลบุรี", "ระยอง", "จันทบุรี", "ตราด", "ฉะเชิงเทรา", "ปราจีนบุรี", "นครนายก", "สระแก้ว",
+      "นครราชสีมา", "บุรีรัมย์", "สุรินทร์", "ศรีสะเกษ", "อุบลราชธานี", "ยโสธร", "ชัยภูมิ", "อำนาจเจริญ", "บึงกาฬ", "หนองบัวลำภู", "ขอนแก่น", "อุดรธานี", "เลย", "หนองคาย", "มหาสารคาม", "ร้อยเอ็ด", "กาฬสินธุ์", "สกลนคร", "นครพนม", "มุกดาหาร",
+      "เชียงใหม่", "ลำพูน", "ลำปาง", "อุตรดิตถ์", "แพร่", "น่าน", "พะเยา", "เชียงราย", "แม่ฮ่องสอน",
+      "นครสวรรค์", "อุทัยธานี", "กำแพงเพชร", "ตาก", "สุโขทัย", "พิษณุโลก", "พิจิตร", "เพชรบูรณ์",
+      "ราชบุรี", "กาญจนบุรี", "สุพรรณบุรี", "นครปฐม", "สมุทรสาคร", "สมุทรสงคราม", "เพชรบุรี", "ประจวบคีรีขันธ์",
+      "นครศรีธรรมราช", "กระบี่", "พังงา", "ภูเก็ต", "สุราษฎร์ธานี", "ระนอง", "ชุมพร", "สงขลา", "สตูล", "ตรัง", "พัทลุง", "ปัตตานี", "ยะลา", "นราธิวาส"
+    ];
+
+    function mapBranchToProvince(branchName) {
+      if (!branchName) return 'ไม่ระบุ';
+      const b = branchName.trim();
+      if (BRANCH_TO_PROVINCE_MAP[b]) return BRANCH_TO_PROVINCE_MAP[b];
+      for (const p of ALL_77_PROVINCES) {
+        if (p.includes(b) || b.includes(p)) return p;
+      }
+      return b;
+    }
+
+    // High-speed RFC4180 CSV parser
+    function parseCSV(text) {
+      const ret = [];
+      let row = [''];
+      ret.push(row);
+      let i = 0, inQuotes = false, prev = '';
+      for (let c = 0; c < text.length; c++) {
+        const l = text[c];
+        if (l === '"') {
+          if (inQuotes && l === prev) {
+            row[i] += l;
+          }
+          inQuotes = !inQuotes;
+        } else if (l === ',' && !inQuotes) {
+          i++;
+          row.push('');
+        } else if (l === '\n' && !inQuotes) {
+          if (prev === '\r') row[i] = row[i].slice(0, -1);
+          row = [''];
+          ret.push(row);
+          i = 0;
+        } else {
+          row[i] += l;
+        }
+        prev = l;
+      }
+      if (prev === '\r') row[i] = row[i].slice(0, -1);
+      if (ret.length > 0 && ret[ret.length - 1].length === 1 && !ret[ret.length - 1][0]) {
+        ret.pop();
+      }
+      return ret;
+    }
+
+    function parseAndProcessSheetCSV(csvText) {
+      const rows = parseCSV(csvText);
+      if (rows.length < 2) throw new Error('ข้อมูลในชีตว่างเปล่า');
+
+      const col = (r, idx) => (r && r[idx] !== undefined) ? r[idx].trim() : '';
+      const allJobs = [];
+      const jayPendingJobs = [];
+
+      for (let rIdx = 1; rIdx < rows.length; rIdx++) {
+        const r = rows[rIdx];
+        if (!r || r.length === 0 || (r.length === 1 && !r[0])) continue;
+
+        const noRef = col(r, 0);
+        const dateRecv = col(r, 1);
+        const branch = col(r, 2);
+        const workType = col(r, 3); // คอลัมน์ D: ประเภทงาน
+        const category = workType ? workType : 'ไม่ระบุประเภทงาน';
+        const nature = col(r, 4);
+        const desc = col(r, 5);
+        const quotation = col(r, 6);
+        const jobNo = col(r, 7);
+        const budget = col(r, 8);
+        const tender = col(r, 9);
+        const closeDate = col(r, 10);
+        const operator = col(r, 11);
+        const status = col(r, 12);
+        const responsible = col(r, 13);
+        const zone = col(r, 14);
+        const siteStatus = col(r, 15);
+        const remark = col(r, 16);
+        const roundCut = col(r, 20);
+        const inWarranty = col(r, 21);
+
+        const province = mapBranchToProvince(branch);
+        const jobId = `job_${rIdx - 1}_${noRef}_${branch}`.replace(/\s+/g, '_');
+
+        const hasClose = Boolean(closeDate && closeDate !== '-');
+        const isClosed = ["จัดส่งบัญชี KAROON", "ปิดเรียบร้อย", "CANCELLED", "ยกเลิกงาน", "สาขาดำเนินการเอง"].includes(status) || hasClose;
+        const isJay = responsible.includes('เจ');
+
+        // Extract integer for sorting
+        const numMatch = noRef.match(/\d+/);
+        const noNum = numMatch ? parseInt(numMatch[0], 10) : 99999999;
+
+        const jobItem = {
+          id: jobId,
+          row_idx: rIdx - 1,
+          no: noRef,
+          no_num: noNum,
+          date: dateRecv,
+          branch: branch,
+          province: province,
+          work_type: workType,
+          category: category,
+          nature: nature,
+          desc: desc,
+          quotation: quotation,
+          job_no: jobNo,
+          budget: budget,
+          tender: tender,
+          close_date: closeDate,
+          operator: operator,
+          status: status,
+          responsible: responsible,
+          zone: zone,
+          site_status: siteStatus,
+          remark: remark,
+          round_cut: roundCut,
+          in_warranty: inWarranty,
+          is_closed: isClosed,
+          is_jay: isJay,
+          custom_responsible: responsible,
+          custom_contractor: operator,
+          custom_notes: '',
+          custom_site_status: siteStatus,
+          custom_contact: ''
+        };
+
+        allJobs.push(jobItem);
+        if (isJay && !isClosed) {
+          jayPendingJobs.push(jobItem);
+        }
+      }
+
+      // Sort: province -> category (Col D) -> no_num ascending
+      jayPendingJobs.sort((a, b) => {
+        if (a.province !== b.province) return a.province.localeCompare(b.province);
+        if (a.category !== b.category) return a.category.localeCompare(b.category);
+        if (a.no_num !== b.no_num) return a.no_num - b.no_num;
+        return a.no.localeCompare(b.no);
+      });
+
+      // Group by province
+      const provincesSummary = {};
+      const statusCounts = {};
+      const categoryCounts = {};
+
+      jayPendingJobs.forEach(job => {
+        statusCounts[job.status] = (statusCounts[job.status] || 0) + 1;
+        categoryCounts[job.category] = (categoryCounts[job.category] || 0) + 1;
+
+        if (!provincesSummary[job.province]) {
+          provincesSummary[job.province] = {
+            province: job.province,
+            pending_count: 0,
+            branches: new Set(),
+            categories: {}
+          };
+        }
+        const pInfo = provincesSummary[job.province];
+        pInfo.pending_count++;
+        if (job.branch) pInfo.branches.add(job.branch);
+        if (!pInfo.categories[job.category]) pInfo.categories[job.category] = [];
+        pInfo.categories[job.category].push(job);
+      });
+
+      // Format provinces
+      Object.keys(provincesSummary).forEach(pName => {
+        const pInfo = provincesSummary[pName];
+        pInfo.branches = Array.from(pInfo.branches).sort();
+        Object.keys(pInfo.categories).forEach(cName => {
+          pInfo.categories[cName].sort((a, b) => a.no_num - b.no_num);
+        });
+      });
+
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const nowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const nowTh = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+      return {
+        sync_status: 'success',
+        sync_message: 'ดาวน์โหลดข้อมูลสดจาก Google Sheets โดยตรง',
+        last_updated: nowStr,
+        last_synced: nowTh,
+        total_rows_sheet: rows.length - 1,
+        total_jay_jobs: allJobs.filter(j => j.is_jay).length,
+        total_jay_pending: jayPendingJobs.length,
+        total_provinces_with_pending: Object.keys(provincesSummary).length,
+        status_counts: statusCounts,
+        category_counts: categoryCounts,
+        provinces: provincesSummary,
+        all_pending_jobs: jayPendingJobs
+      };
+    }
+
+
+    // Sync from Google Sheet (Direct Live + Server fallback)
+    async function triggerSync() {
+      const btn = document.getElementById('btnSync');
+      const icon = document.getElementById('syncIcon');
+      const btnText = btn.querySelector('span');
+      const originalText = btnText ? btnText.textContent : 'ซิงค์ Google Sheet';
+
+      if (btnText) btnText.textContent = 'กำลังดึงข้อมูลสด...';
+      icon.classList.add('animate-spin');
+      btn.disabled = true;
+
+      try {
+        // 1. Fetch live directly from Google Sheet (with cache buster timestamp)
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/1gB2vq-JhUTgFbOSanF_jAwnzNndzKtYRgFXdEiN8lKU/export?format=csv&gid=0&_t=${Date.now()}`;
+        const res = await fetch(sheetUrl, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        });
+        
+        if (!res.ok) throw new Error(`Google Sheets ตอบกลับรหัส ${res.status}`);
+        const csvText = await res.text();
+        if (csvText.length < 1000) throw new Error('ข้อมูลที่ได้รับมีขนาดเล็กผิดปกติ');
+
+        // 2. Parse and build complete fresh data structure
+        const newData = parseAndProcessSheetCSV(csvText);
+        appData = newData;
+        mergeCustomEdits();
+        renderKPIs();
+        renderThailandMap();
+        renderTopProvincesBadges();
+        renderTaskList();
+
+        // 3. Save to localStorage
+        try {
+          localStorage.setItem('GBH_LIVE_DASHBOARD_DATA', JSON.stringify(appData));
+        } catch(e) {}
+
+        // 4. Notify local server if running in background to update files on disk too
+        try {
+          fetch('/api/sync', { method: 'POST', cache: 'no-store' });
+        } catch(e) {}
+
+        const timeStr = newData.last_synced;
+        showToast(`✅ ซิงค์ข้อมูลสดสำเร็จ! พบ ${newData.total_jay_pending} งานค้าง (${timeStr})`);
+
+        // Highlight header time
+        const timeHeader = document.getElementById('headerLastUpdated');
+        if (timeHeader) {
+          timeHeader.textContent = timeStr;
+          timeHeader.classList.add('text-amber-300', 'font-bold');
+          setTimeout(() => timeHeader.classList.remove('text-amber-300'), 4000);
+        }
+      } catch (err) {
+        console.warn('Direct Google Sheet fetch failed, trying local server:', err);
+        // Fallback: local server
+        try {
+          const sRes = await fetch('/api/sync', { method: 'POST', cache: 'no-store' });
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            appData = sData;
+            mergeCustomEdits();
+            renderKPIs();
+            renderThailandMap();
+            renderTopProvincesBadges();
+            renderTaskList();
+            showToast(`✅ ดึงข้อมูลล่าสุดผ่านเซิร์ฟเวอร์สำเร็จ! (พบ ${sData.total_jay_pending} งานค้าง)`);
+            return;
+          }
+        } catch(e) {}
+
+        showToast(`❌ ซิงค์ข้อมูลไม่สำเร็จ: ${err.message}`);
+      } finally {
+        if (btnText) btnText.textContent = originalText;
+        icon.classList.remove('animate-spin');
+        btn.disabled = false;
+      }
+    }
+
+
+    // EXCEL (.XLSX) EXPORT FUNCTION
+    function exportToExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert('กำลังโหลดโมดูลสร้างไฟล์ Excel กรุณารอ 2 วินาทีแล้วลองใหม่');
+        return;
+      }
+
+      if (!appData || !appData.all_pending_jobs || appData.all_pending_jobs.length === 0) {
+        showToast('❌ ไม่มีข้อมูลงานค้างสำหรับส่งออก');
+        return;
+      }
+
+      const jobs = appData.all_pending_jobs;
+
+      // 1. Prepare Main Sheet Data (งานค้างทั้งหมด)
+      const mainRows = jobs.map((j, idx) => ({
+        'ลำดับ': idx + 1,
+        'เลขแจ้งซ่อม (No. ที่)': j.no || '',
+        'JOB NO.': j.job_no || '',
+        'วันที่รับเอกสาร': j.date || '',
+        'จังหวัด': j.province || '',
+        'สาขา': j.branch || '',
+        'เขต': j.zone || '',
+        'ประเภทงาน (คอลัมน์ D)': j.category || j.work_type || '',
+        'ลักษณะงาน': j.nature || '',
+        'รายละเอียดงาน / ปัญหา': j.desc || '',
+        'ใบเสนอราคา': j.quotation || '',
+        'BUDGET (THB)': j.budget || '',
+        'TENDER (THB)': j.tender || '',
+        'สถานะ (STATUS)': j.status || '',
+        'ผู้รับผิดชอบ': j.custom_responsible || j.responsible || 'ช่างเจ',
+        'ชื่อ ผรม. ที่เข้าดำเนินการ': j.custom_contractor || j.operator || '',
+        'สถานะหน้างาน': j.custom_site_status || j.site_status || '',
+        'ช่องทางติดต่อ ผรม.': j.custom_contact || '',
+        'บันทึกเพิ่มเติม / หมายเหตุ': j.custom_notes || j.remark || ''
+      }));
+
+      const wb = XLSX.utils.book_new();
+
+      // Main Sheet
+      const wsMain = XLSX.utils.json_to_sheet(mainRows);
+      wsMain['!cols'] = [
+        { wch: 8 },  // ลำดับ
+        { wch: 18 }, // เลขแจ้งซ่อม
+        { wch: 16 }, // JOB NO.
+        { wch: 16 }, // วันที่รับเอกสาร
+        { wch: 18 }, // จังหวัด
+        { wch: 22 }, // สาขา
+        { wch: 12 }, // เขต
+        { wch: 28 }, // ประเภทงาน
+        { wch: 32 }, // ลักษณะงาน
+        { wch: 45 }, // รายละเอียดงาน
+        { wch: 22 }, // ใบเสนอราคา
+        { wch: 15 }, // BUDGET
+        { wch: 15 }, // TENDER
+        { wch: 18 }, // สถานะ
+        { wch: 18 }, // ผู้รับผิดชอบ
+        { wch: 25 }, // ชื่อ ผรม.
+        { wch: 22 }, // สถานะหน้างาน
+        { wch: 20 }, // ช่องทางติดต่อ
+        { wch: 35 }  // บันทึกเพิ่มเติม
+      ];
+      XLSX.utils.book_append_sheet(wb, wsMain, "งานซ่อมคงค้างทั้งหมด");
+
+      // Optional: If a specific province is currently filtered, add a dedicated sheet for it
+      if (selectedProvince) {
+        const provJobs = jobs.filter(j => j.province === selectedProvince);
+        if (provJobs.length > 0) {
+          const provRows = provJobs.map((j, idx) => ({
+            'ลำดับ': idx + 1,
+            'เลขแจ้งซ่อม (No. ที่)': j.no || '',
+            'JOB NO.': j.job_no || '',
+            'วันที่รับเอกสาร': j.date || '',
+            'สาขา': j.branch || '',
+            'ประเภทงาน (คอลัมน์ D)': j.category || '',
+            'ลักษณะงาน': j.nature || '',
+            'รายละเอียดงาน / ปัญหา': j.desc || '',
+            'สถานะ (STATUS)': j.status || '',
+            'ผู้รับผิดชอบ': j.custom_responsible || j.responsible || 'ช่างเจ',
+            'ชื่อ ผรม. ที่เข้าดำเนินการ': j.custom_contractor || j.operator || '',
+            'สถานะหน้างาน': j.custom_site_status || '',
+            'ช่องทางติดต่อ': j.custom_contact || '',
+            'บันทึกเพิ่มเติม': j.custom_notes || ''
+          }));
+          const wsSelProv = XLSX.utils.json_to_sheet(provRows);
+          wsSelProv['!cols'] = [
+            { wch: 8 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 22 },
+            { wch: 28 }, { wch: 32 }, { wch: 45 }, { wch: 18 }, { wch: 18 },
+            { wch: 25 }, { wch: 22 }, { wch: 20 }, { wch: 35 }
+          ];
+          const sheetTitle = `เฉพาะจังหวัด_${selectedProvince}`.slice(0, 31);
+          XLSX.utils.book_append_sheet(wb, wsSelProv, sheetTitle);
+        }
+      }
+
+      // 2. Summary by Province Sheet
+      const provMap = {};
+      jobs.forEach(j => {
+        const p = j.province || 'ไม่ระบุ';
+        if (!provMap[p]) {
+          provMap[p] = { count: 0, branches: new Set(), boq: 0, action: 0, quote: 0 };
+        }
+        provMap[p].count++;
+        if (j.branch) provMap[p].branches.add(j.branch);
+        if (j.status === 'รอประเมินBOQ') provMap[p].boq++;
+        else if (j.status === 'รอดำเนินการ') provMap[p].action++;
+        else if (j.status === 'รอใบเสนอราคา') provMap[p].quote++;
+      });
+
+      const provSummaryRows = Object.entries(provMap)
+        .sort((a, b) => b[1].count - a[1].count)
+        .map(([pName, pInfo], idx) => ({
+          'ลำดับ': idx + 1,
+          'จังหวัด': pName,
+          'จำนวนงานค้าง (งาน)': pInfo.count,
+          'สาขาในพื้นที่': Array.from(pInfo.branches).join(', '),
+          'รอประเมินBOQ': pInfo.boq,
+          'รอดำเนินการ': pInfo.action,
+          'รอใบเสนอราคา': pInfo.quote
+        }));
+
+      const wsProv = XLSX.utils.json_to_sheet(provSummaryRows);
+      wsProv['!cols'] = [
+        { wch: 8 }, { wch: 20 }, { wch: 20 }, { wch: 45 },
+        { wch: 16 }, { wch: 16 }, { wch: 16 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsProv, "สรุปรายจังหวัด");
+
+      // 3. Summary by Category (Column D) Sheet
+      const catMap = {};
+      jobs.forEach(j => {
+        const c = j.category || 'ไม่ระบุประเภทงาน';
+        catMap[c] = (catMap[c] || 0) + 1;
+      });
+
+      const catSummaryRows = Object.entries(catMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([cName, cnt], idx) => ({
+          'ลำดับ': idx + 1,
+          'ประเภทงาน (คอลัมน์ D)': cName,
+          'จำนวนงานค้าง (งาน)': cnt
+        }));
+
+      const wsCat = XLSX.utils.json_to_sheet(catSummaryRows);
+      wsCat['!cols'] = [{ wch: 8 }, { wch: 35 }, { wch: 22 }];
+      XLSX.utils.book_append_sheet(wb, wsCat, "สรุปประเภทงาน");
+
+      // Generate File Name
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const dStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+      const fileName = `สรุปงานซ่อมคงค้าง_ช่างเจ_GBH_${dStr}.xlsx`;
+
+      XLSX.writeFile(wb, fileName);
+      showToast(`📊 ส่งออกไฟล์ Excel สำเร็จ! (${fileName})`);
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `GBH_ช่างเจ_งานคงค้าง_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Map Zoom Helpers
+    let mapScale = 1.0;
+    function zoomMap(factor) {
+      mapScale *= factor;
+      if (mapScale < 0.8) mapScale = 0.8;
+      if (mapScale > 2.5) mapScale = 2.5;
+      document.getElementById('thailandSvg').style.transform = `scale(${mapScale})`;
+      document.getElementById('thailandSvg').style.transformOrigin = 'center center';
+    }
+    function resetMapZoom() {
+      mapScale = 1.0;
+      document.getElementById('thailandSvg').style.transform = `scale(1)`;
+    }
+  </script>
+</body>
+</html>
