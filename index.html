@@ -85,7 +85,7 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold tracking-tight text-white">Dashboard งานซ่อมคงค้าง - ช่างเจ</h1>
+            <h1 class="text-xl font-bold tracking-tight text-white">Dashboard งานซ่อมคงค้าง - <span id="headerTechName" class="text-sky-300">ช่างเจ</span></h1>
             <span class="bg-amber-400/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-400/40">Global House / AESCON</span>
           </div>
           <p class="text-xs text-sky-200/70 mt-0.5">ระบบติดตามสถานะงานซ่อมรายจังหวัด แยกตามหมวดหมู่และเลขแจ้งซ่อม</p>
@@ -94,11 +94,41 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center flex-wrap gap-2 text-sm">
+        <!-- Protected Sheet Technician Selector in Header -->
+        <div class="flex items-center gap-1.5 bg-slate-800/95 border border-slate-700/80 rounded-lg px-2.5 py-1.5 shadow-sm">
+          <span class="text-xs text-slate-300 font-medium flex items-center gap-1">
+            <span>📋 ช่างใน Sheet:</span>
+            <b id="activeSheetTechBadge" class="text-sky-300 font-bold">ช่างเจ</b>
+          </span>
+          <button type="button" id="btnToggleSheetTech" onclick="toggleSheetTechDropdown()" 
+            class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded border border-slate-600 transition flex items-center gap-1 active:scale-95"
+            title="คลิกเพื่อปลดล็อก/เปลี่ยนกลุ่มช่างจาก Google Sheet">
+            <span id="sheetTechLockIcon">🔒</span>
+            <span id="sheetTechLockLabel">เปลี่ยน</span>
+          </button>
+          <div id="sheetTechDropdownWrapper" class="hidden items-center pl-1.5 border-l border-slate-600">
+            <select id="technicianSelectHeader" onchange="onSelectTechnician(this.value)" 
+              class="bg-slate-900 text-sky-300 font-bold text-xs rounded px-2 py-0.5 border border-sky-400 focus:outline-none cursor-pointer">
+              <option value="ช่างเจ">ช่างเจ</option>
+              <option value="all">ช่างทั้งหมด</option>
+            </select>
+          </div>
+        </div>
+
         <div class="text-xs text-slate-300 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>ข้อมูลล่าสุด: <span id="headerLastUpdated" class="text-white font-medium">-</span></span>
         </div>
         
+        <!-- Import Local File Button -->
+        <input type="file" id="localExcelPicker" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleLocalFileUpload(event)">
+        <button onclick="document.getElementById('localExcelPicker').click()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm border border-indigo-400/40 active:scale-95" title="เลือกไฟล์ Excel (.xlsx) หรือ CSV ในเครื่องเพื่ออัปเดตข้อมูล">
+          <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span>นำเข้าไฟล์ในเครื่อง</span>
+        </button>
+
         <button id="btnSync" onclick="triggerSync()" class="bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm border border-sky-400/40 active:scale-95">
           <svg class="w-4 h-4" id="syncIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -202,8 +232,32 @@
       </div>
     </section>
 
-    <!-- WORKSPACE SPLIT: LEFT MAP / RIGHT TASKS -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
+    <!-- NAVIGATION TABS -->
+    <div class="flex items-center justify-between border-b border-slate-200 gap-3 pb-1 flex-wrap">
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Tab 1: Dashboard View -->
+        <button id="tabBtnDashboard" onclick="switchMainTab('dashboard')" 
+          class="tab-nav-btn active px-4 py-2 text-xs sm:text-sm font-bold rounded-t-xl transition flex items-center gap-2 border-b-2 border-sky-600 text-sky-800 bg-sky-50/80 shadow-xs">
+          <span>🗺️ แผนที่ & รายการงาน (แยกหมวดหมู่)</span>
+        </button>
+
+        <!-- Tab 2: Excel Table View -->
+        <button id="tabBtnExcelTable" onclick="switchMainTab('excelTable')" 
+          class="tab-nav-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition flex items-center gap-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+          <span>📊 ตารางสรุปงาน (เหมือน Excel)</span>
+          <span id="tabExcelCountBadge" class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">0 งาน</span>
+          <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-md hidden sm:inline-block">ล่าสุด ➔ เก่าสุด</span>
+        </button>
+      </div>
+
+      <!-- Quick context notice on right side of tab bar -->
+      <div class="flex items-center gap-2 text-xs text-slate-500">
+        <span id="tabContextNotice">แสดงงานของ: <b id="tabTechBadge" class="text-sky-700 font-bold">ช่างเจ</b></span>
+      </div>
+    </div>
+
+    <!-- TAB 1: WORKSPACE SPLIT (LEFT MAP / RIGHT TASKS) -->
+    <div id="tabContentDashboard" class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
 
       <!-- LEFT COLUMN: MAP & PROVINCE SELECTOR (5 COLS) -->
       <div class="lg:col-span-5 flex flex-col gap-3">
@@ -214,7 +268,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-base font-bold text-slate-800">แผนที่ประเทศไทย (77 จังหวัด)</span>
-                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">คลิกเลือกจังหวัด</span>
+                <span id="mapTechBadge" class="text-xs bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full font-semibold border border-sky-200">งานช่างเจ</span>
               </div>
               <button onclick="resetSelectedProvince()" class="text-xs text-sky-600 hover:text-sky-800 font-medium flex items-center gap-1">
                 <span>แสดงทุกจังหวัด</span>
@@ -239,6 +293,17 @@
               <button onclick="filterRegion('กลาง')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">กลาง/ตต.</button>
               <button onclick="filterRegion('ตะวันออก')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">ตะวันออก</button>
               <button onclick="filterRegion('ใต้')" class="region-pill px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">ใต้</button>
+            </div>
+
+            <!-- Zone Filter Dropdown (Map side) -->
+            <div class="flex items-center gap-2 pt-1 border-t border-slate-100 text-xs">
+              <span class="text-slate-600 font-semibold whitespace-nowrap flex items-center gap-1">
+                <span>🏢 แยกตามเขต:</span>
+              </span>
+              <select id="leftZoneSelect" onchange="onSelectZone(this.value)" 
+                class="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition cursor-pointer">
+                <option value="all">ทุกเขต (ทั้งหมด)</option>
+              </select>
             </div>
           </div>
 
@@ -305,9 +370,10 @@
                     396 งาน
                   </span>
                 </div>
-                <p id="activeProvinceSubtitle" class="text-xs text-slate-500 mt-0.5">
-                  สาขา: แสดงงานค้างทุกสาขาของช่างเจ
-                </p>
+                <!-- Interactive Branch Pills Container -->
+                <div id="branchPillsContainer" class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <span class="text-xs text-slate-500">สาขา: แสดงงานค้างทุกสาขาของช่างเจ</span>
+                </div>
               </div>
             </div>
 
@@ -318,6 +384,58 @@
               </svg>
               <span>เรียง: <b>แยกตามหมวดหมู่</b> ➔ <b>เลขแจ้งซ่อมน้อยไปมาก</b></span>
             </div>
+          </div>
+
+          <!-- PRIMARY SELECTORS: TECHNICIAN, ZONE & BRANCH DROPDOWNS -->
+          <div class="bg-gradient-to-r from-slate-50 via-sky-50/40 to-slate-50 p-3 rounded-xl border border-slate-200/90 flex flex-wrap sm:flex-nowrap items-center gap-3">
+            <!-- ช่าง Dropdown (ซ่อน/ล็อกไว้เพื่อป้องกันการเปลี่ยนเล่น) -->
+            <div class="flex-1 min-w-[190px] flex items-center gap-2">
+              <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <span class="w-5 h-5 rounded-md bg-sky-100 text-sky-700 flex items-center justify-center text-[11px]">🔧</span>
+                <span>ช่างใน Sheet:</span>
+              </label>
+              <div id="tab1TechBadgeWrapper" class="flex items-center gap-1.5 w-full">
+                <span id="tab1ActiveTechBadge" class="text-xs font-bold px-2.5 py-1.5 bg-sky-50 text-sky-800 border border-sky-200 rounded-lg flex-1 truncate">ช่างเจ</span>
+                <button type="button" onclick="toggleTab1TechSelect()" id="btnToggleTab1Tech" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-lg border border-slate-300 font-semibold transition" title="คลิกเพื่อปลดล็อก/เปลี่ยนช่างจาก Sheet">
+                  🔒
+                </button>
+              </div>
+              <select id="technicianSelect" onchange="onSelectTechnician(this.value)" 
+                class="hidden w-full px-3 py-1.5 bg-white border border-sky-400 rounded-lg text-xs font-bold text-sky-950 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition cursor-pointer shadow-sm">
+                <option value="ช่างเจ">ช่างเจ</option>
+                <option value="all">ช่างทั้งหมด</option>
+              </select>
+            </div>
+
+            <!-- เขต Dropdown -->
+            <div class="flex-1 min-w-[180px] flex items-center gap-2">
+              <label for="zoneSelect" class="text-xs font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <span class="w-5 h-5 rounded-md bg-indigo-100 text-indigo-700 flex items-center justify-center text-[11px]">🏢</span>
+                <span>เลือกเขต:</span>
+              </label>
+              <select id="zoneSelect" onchange="onSelectZone(this.value)" 
+                class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition cursor-pointer shadow-sm">
+                <option value="all">ทุกเขต (ทั้งหมด)</option>
+              </select>
+            </div>
+
+            <!-- สาขา Dropdown -->
+            <div class="flex-1 min-w-[210px] flex items-center gap-2">
+              <label for="branchSelect" class="text-xs font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-700 flex items-center justify-center text-[11px]">🏪</span>
+                <span>เลือกสาขา:</span>
+              </label>
+              <select id="branchSelect" onchange="onSelectBranch(this.value)" 
+                class="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition cursor-pointer shadow-sm">
+                <option value="all">ทุกสาขา</option>
+              </select>
+            </div>
+
+            <!-- Clear Filter Button -->
+            <button id="btnClearFilters" onclick="resetAllFilters()" title="ล้างตัวกรองทั้งหมด" 
+              class="hidden text-xs text-rose-600 hover:text-rose-700 font-bold bg-white hover:bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 transition items-center gap-1 shadow-sm active:scale-95 whitespace-nowrap">
+              <span>✕ รีเซ็ตตัวกรอง</span>
+            </button>
           </div>
 
           <!-- Secondary Filters: Search & Status -->
@@ -347,7 +465,193 @@
 
       </div>
     </div>
+    <!-- END TAB 1 -->
+
+    <!-- TAB 2: EXCEL SPREADSHEET TABLE VIEW (SORTED NEWEST TO OLDEST) -->
+    <div id="tabContentExcelTable" class="hidden flex-col gap-4">
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col gap-3.5">
+        
+        <!-- Controls Bar inside Excel Table -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2.5">
+              <span class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg shadow-xs">📊</span>
+              <div>
+                <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 flex-wrap">
+                  <span>ตารางสรุปงานซ่อมคงค้าง</span>
+                  <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">เรียงจากงานล่าสุด ➔ เก่าสุด</span>
+                  <span class="text-xs bg-sky-50 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full font-semibold">🖱️ ดับเบิ้ลคลิกแถวเพื่อแก้ไข</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">รูปแบบตารางเหมือน Excel เลื่อนดูได้ทุกคอลัมน์ และคลิกที่หัวตารางเพื่อสลับการเรียงลำดับได้</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions & Search -->
+          <div class="flex items-center gap-2 flex-wrap text-xs">
+            <!-- Search in table -->
+            <div class="relative min-w-[250px]">
+              <input type="text" id="excelTableSearch" oninput="filterExcelTable(this.value)" placeholder="🔍 ค้นหาในตาราง (เลขที่, สาขา, ผรม., ฯลฯ)..."
+                class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none transition">
+              <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <!-- Quick Edit Lock Toggle Button -->
+            <button onclick="toggleTableQuickEdit()" id="btnTableQuickEdit" 
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-2xs" 
+              title="คลิกเพื่อปลดล็อกหรือล็อกการแก้ไขผู้รับผิดชอบด่วนในตาราง">
+              <span id="tableQuickEditIcon">🔒</span>
+              <span id="tableQuickEditText">ล็อกตาราง (ดูอย่างเดียว)</span>
+            </button>
+
+            <!-- Sort Toggle Button -->
+            <button onclick="toggleExcelDateSort()" id="btnSortDirection" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-2xs" title="คลิกเพื่อสลับระหว่าง งานล่าสุดไปเก่าสุด หรือ เก่าสุดไปล่าสุด">
+              <span id="sortDirectionIcon">⬇️</span>
+              <span id="sortDirectionText">ล่าสุด ➔ เก่าสุด</span>
+            </button>
+
+            <!-- Export Excel Button inside Tab -->
+            <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition shadow-sm border border-emerald-500/50 active:scale-95">
+              <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>ดาวน์โหลด Excel</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Excel Table Grid Container -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+          <div class="overflow-x-auto max-h-[720px] overflow-y-auto relative bg-slate-50">
+            <table id="mainExcelTable" class="w-full border-collapse text-xs text-left bg-white">
+              <thead class="sticky top-0 z-20 bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white text-[11px] font-bold select-none shadow-sm">
+                <tr>
+                  <th class="px-3 py-3 text-center w-12 border-b border-sky-800">#</th>
+                  <th onclick="sortExcelBy('date')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามวันที่">
+                    <div class="flex items-center gap-1">
+                      <span>วันที่รับเอกสาร</span>
+                      <span id="sortIcon-date" class="text-amber-300">▼</span>
+                    </div>
+                  </th>
+                  <th onclick="sortExcelBy('no')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามเลขแจ้งซ่อม">
+                    <div class="flex items-center gap-1">
+                      <span>เลขแจ้งซ่อม (No. ที่)</span>
+                      <span id="sortIcon-no" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th onclick="sortExcelBy('branch')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามสาขา">
+                    <div class="flex items-center gap-1">
+                      <span>สาขา</span>
+                      <span id="sortIcon-branch" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th onclick="sortExcelBy('province')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามจังหวัด">
+                    <div class="flex items-center gap-1">
+                      <span>จังหวัด</span>
+                      <span id="sortIcon-province" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th onclick="sortExcelBy('category')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามประเภทงาน">
+                    <div class="flex items-center gap-1">
+                      <span>ประเภทงาน (คอลัมน์ D)</span>
+                      <span id="sortIcon-category" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th class="px-3 py-3 border-b border-sky-800 whitespace-nowrap min-w-[200px]">ลักษณะงาน / รายละเอียด</th>
+                  <th onclick="sortExcelBy('status')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามสถานะ">
+                    <div class="flex items-center gap-1">
+                      <span>สถานะ</span>
+                      <span id="sortIcon-status" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th onclick="sortExcelBy('responsible')" class="px-3 py-3 cursor-pointer hover:bg-white/10 transition border-b border-sky-800 whitespace-nowrap" title="คลิกเพื่อเรียงตามผู้รับผิดชอบ">
+                    <div class="flex items-center gap-1">
+                      <span>ผู้รับผิดชอบ</span>
+                      <span id="sortIcon-responsible" class="text-slate-400">⇅</span>
+                    </div>
+                  </th>
+                  <th class="px-3 py-3 border-b border-sky-800 whitespace-nowrap bg-emerald-950/80">
+                    <div class="flex items-center gap-1 text-emerald-300">
+                      <span>👷 ชื่อ ผรม.</span>
+                    </div>
+                  </th>
+                  <th class="px-3 py-3 border-b border-sky-800 whitespace-nowrap bg-amber-950/80">
+                    <div class="flex items-center gap-1 text-amber-300">
+                      <span>📍 สถานะหน้างาน</span>
+                    </div>
+                  </th>
+                  <th class="px-3 py-3 border-b border-sky-800 whitespace-nowrap min-w-[140px]">หมายเหตุ</th>
+                  
+                </tr>
+              </thead>
+              <tbody id="excelTableTbody" class="divide-y divide-slate-200 font-sans">
+                <!-- Rows injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table Summary Footer -->
+        <div class="flex items-center justify-between flex-wrap gap-2 text-xs text-slate-500 pt-1">
+          <div class="flex items-center gap-3">
+            <span id="excelTableCountText" class="font-bold text-slate-700">แสดง 0 งาน</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> ไฮไลต์สีเขียว = ระบุ ผรม. หรือสถานะหน้างานแล้ว</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-slate-500 font-medium bg-slate-100/90 px-3 py-1.5 rounded-lg border border-slate-200">
+            <span class="text-sky-600 font-bold">🖱️ ดับเบิ้ลคลิก (Double-Click)</span>
+            <span>ที่แถวใดก็ได้ เพื่อเปิดหน้าต่างแก้ไขข้อมูลและมอบหมายงาน</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- END TAB 2 -->
   </main>
+
+  
+  <!-- MODAL: AUTO-SYNC / UPDATE FROM SHEET POPUP -->
+  <div id="syncModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl border border-sky-100 p-6 sm:p-8 max-w-sm w-full flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Icon / Status Animation -->
+      <div id="syncModalIconBox" class="w-16 h-16 rounded-2xl bg-sky-50 border border-sky-200/80 flex items-center justify-center text-sky-600 shadow-inner relative">
+        <svg id="syncModalSpinner" class="w-8 h-8 animate-spin text-sky-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span id="syncModalSuccessIcon" class="hidden text-3xl">✅</span>
+        <span id="syncModalWarningIcon" class="hidden text-3xl">⚠️</span>
+      </div>
+
+      <!-- Title & Description -->
+      <div class="flex flex-col gap-1.5">
+        <h3 id="syncModalTitle" class="text-base sm:text-lg font-bold text-slate-800">
+          กำลังอัปเดตข้อมูลจากชีต...
+        </h3>
+        <p id="syncModalDesc" class="text-xs text-slate-500 leading-relaxed">
+          ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมล่าสุดจาก Google Sheet กรุณารอสักครู่
+        </p>
+      </div>
+
+      <!-- Animated Progress Bar -->
+      <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+        <div id="syncModalProgressBar" class="bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-500 h-1.5 rounded-full w-2/3 transition-all duration-300 animate-pulse"></div>
+      </div>
+
+      <!-- Footer indicator -->
+      <div class="flex items-center justify-between w-full pt-1 text-[11px] text-slate-400">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Google Sheet Realtime Sync</span>
+        </div>
+        <button type="button" onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600 text-xs px-2 py-0.5 rounded hover:bg-slate-100 transition">
+          ปิด
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: TASK DETAIL & CONTRACTOR / RESPONSIBLE EDITOR -->
   <div id="taskModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden transition-opacity">
@@ -375,12 +679,19 @@
       <!-- Modal Body (Scrollable) -->
       <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col gap-5 flex-1 bg-slate-50/50">
         
-        <!-- Job Details Grid from Sheet -->
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
-          <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            ข้อมูลแจ้งซ่อมจากระบบ
-          </h4>
+        <!-- Job Details Grid from Documents (กรอบข้อมูลจาก Documents) -->
+        <div class="bg-white p-4 sm:p-5 rounded-xl border-2 border-slate-300 shadow-sm flex flex-col gap-3.5">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+            <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-sky-100 border border-sky-300/80 flex items-center justify-center text-sky-700 text-xs">
+                📄
+              </span>
+              <span>ข้อมูลจาก Documents</span>
+            </h4>
+            <span class="text-[11px] bg-slate-100 text-slate-600 font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
+              เอกสารแจ้งซ่อมต้นทาง
+            </span>
+          </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
@@ -450,14 +761,55 @@
             <input type="hidden" id="editJobId">
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <!-- JOB NO. -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>🏷️ JOB NO.</span>
+                  <span class="text-[11px] text-sky-600 font-normal">ระบุเลขที่เปิด JOB</span>
+                </label>
+                <input type="text" id="inputJobNo" 
+                  class="w-full px-3 py-2 bg-sky-50/50 border border-sky-300 rounded-lg text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  placeholder="เช่น 6701-0025 หรือ ระบุเลข JOB...">
+              </div>
+
               <!-- ผู้รับผิดชอบ -->
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">
-                  👤 ผู้รับผิดชอบงาน
+                <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>👤 ผู้รับผิดชอบงาน</span>
+                  <span class="text-[11px] text-slate-400 font-normal">เลือกหรือพิมพ์ระบุเอง</span>
                 </label>
+                <select id="selectModalResponsible" onchange="onModalResponsibleChange(this.value)"
+                  class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none transition cursor-pointer">
+                  <!-- options populated dynamically -->
+                </select>
                 <input type="text" id="inputResponsible" 
-                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                  placeholder="เช่น ช่างเจ, ช่างเบศ...">
+                  class="hidden mt-1.5 w-full px-3 py-2 bg-white border border-sky-300 rounded-lg text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  placeholder="พิมพ์ระบุชื่อผู้รับผิดชอบ...">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <!-- สถานะหน้างาน / ความคืบหน้า -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  📊 สถานะหน้างาน / การดำเนินการ
+                </label>
+                <select id="inputSiteStatus"
+                  class="w-full px-3 py-2 bg-indigo-50/40 border border-indigo-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white transition cursor-pointer">
+                  <option value="">-- ยังไม่ระบุสถานะ (ค่าเริ่มต้น) --</option>
+                  <option value="รอ ผรม. เข้าดูหน้างาน">รอ ผรม. เข้าดูหน้างาน</option>
+                  <option value="ผรม. เข้าดูหน้างานแล้ว - รอราคา">ผรม. เข้าดูหน้างานแล้ว - รอราคา</option>
+                  <option value="กำลังจัดทำ BOQ">กำลังจัดทำ BOQ</option>
+                  <option value="เปิดJOB">เปิดJOB</option>
+                  <option value="Add Budget">Add Budget</option>
+                  <option value="Add BOM">Add BOM</option>
+                  <option value="รอPO">รอPO</option>
+                  <option value="อนุมัติแล้ว - ผรม. เตรียมเข้าทำ">อนุมัติแล้ว - ผรม. เตรียมเข้าทำ</option>
+                  <option value="ผรม. กำลังเข้าดำเนินการ">ผรม. กำลังเข้าดำเนินการ</option>
+                  <option value="งานเสร็จสิ้น - รอส่งเอกสาร">งานเสร็จสิ้น - รอส่งเอกสาร</option>
+                  <option value="สาขาดำเนินการเอง">สาขาดำเนินการเอง</option>
+                  <option value="ยกเลิกงาน">ยกเลิกงาน</option>
+                </select>
               </div>
 
               <!-- ชื่อ ผรม. ที่เข้าดำเนินการ -->
@@ -471,35 +823,14 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <!-- สถานะหน้างาน / ความคืบหน้า -->
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">
-                  📊 สถานะหน้างาน / การดำเนินการ
-                </label>
-                <input type="text" id="inputSiteStatus" list="siteStatusOptions"
-                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                  placeholder="เลือกหรือพิมพ์สถานะ เช่น ผรม.เข้าดูหน้างานแล้ว">
-                <datalist id="siteStatusOptions">
-                  <option value="รอ ผรม. เข้าดูหน้างาน"></option>
-                  <option value="ผรม. เข้าดูหน้างานแล้ว - รอราคา"></option>
-                  <option value="กำลังจัดทำ BOQ"></option>
-                  <option value="อนุมัติแล้ว - ผรม. เตรียมเข้าทำ"></option>
-                  <option value="ผรม. กำลังเข้าดำเนินการ"></option>
-                  <option value="งานเสร็จสิ้น - รอส่งเอกสาร"></option>
-                  <option value="สาขาดำเนินการเอง"></option>
-                </datalist>
-              </div>
-
-              <!-- เบอร์ติดต่อ ผรม. หรือข้อความสรุป -->
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">
-                  📞 ช่องทางติดต่อ ผรม. / วันนัดหมาย
-                </label>
-                <input type="text" id="inputContractorContact" 
-                  class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                  placeholder="เช่น โทร 081-xxx-xxxx, นัดเข้า 20 มี.ค.">
-              </div>
+            <!-- เบอร์ติดต่อ ผรม. หรือข้อความสรุป -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">
+                📞 ช่องทางติดต่อ ผรม. / วันนัดหมาย
+              </label>
+              <input type="text" id="inputContractorContact" 
+                class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                placeholder="เช่น โทร 081-xxx-xxxx, นัดเข้า 20 มี.ค.">
             </div>
 
             <!-- หมายเหตุเพิ่มเติม / รายละเอียดการประสานงาน -->
@@ -555,7 +886,10 @@
     };
 
     let appData = null;
-    let selectedProvince = null; // null = all provinces
+    let selectedTechnician = localStorage.getItem('GBH_SELECTED_TECH') || 'ช่างเจ'; // Remembers last selected tech, default 'ช่างเจ'
+    let selectedProvince = null;  // null = all provinces
+    let selectedZone = 'all';      // 'all' or 'เขต 1-1', 'เขต 1-2', etc.
+    let selectedBranch = 'all';    // 'all' or specific branch name
     let currentStatusFilter = 'all';
     let currentRegionFilter = 'all';
     let activeJob = null;
@@ -568,6 +902,153 @@
         customEdits = JSON.parse(saved);
       }
     } catch(e) { console.warn('Could not read localStorage', e); }
+
+    
+    // =========================================================
+    // TECHNICIAN FILTER LOGIC
+    // =========================================================
+    function getJobsForSelectedTechnician() {
+      if (!appData || !appData.all_pending_jobs) return [];
+      if (!selectedTechnician || selectedTechnician === 'all') {
+        return appData.all_pending_jobs;
+      }
+      if (selectedTechnician === 'งานระบบ') {
+        return appData.all_pending_jobs.filter(j => {
+          const sheetResp = (j.responsible || '').trim();
+          const customResp = (j.custom_responsible || '').trim();
+          return sheetResp === 'งานระบบ' || customResp === 'งานระบบ';
+        });
+      }
+      if (selectedTechnician === 'ไม่ระบุ') {
+        return appData.all_pending_jobs.filter(j => {
+          const sheetResp = (j.responsible || '').trim();
+          const customResp = (j.custom_responsible || '').trim();
+          return (!customResp && (sheetResp === 'ไม่ระบุ' || !sheetResp || sheetResp === '-')) || customResp === 'ไม่ระบุ';
+        });
+      }
+      if (selectedTechnician === 'ช่างเจ') {
+        return appData.all_pending_jobs.filter(j => {
+          const sheetResp = (j.responsible || '').trim();
+          const customResp = (j.custom_responsible || '').trim();
+          return j.is_jay || sheetResp.includes('เจ') || customResp.includes('เจ');
+        });
+      }
+      return appData.all_pending_jobs.filter(j => {
+        const sheetResp = (j.responsible || '').trim();
+        const customResp = (j.custom_responsible || '').trim();
+        return sheetResp === selectedTechnician || customResp === selectedTechnician;
+      });
+    }
+
+    function populateTechnicianOptions() {
+      if (!appData || !appData.all_pending_jobs) return;
+      const tSelect = document.getElementById('technicianSelect');
+      const tHeaderSelect = document.getElementById('technicianSelectHeader');
+      if (!tSelect && !tHeaderSelect) return;
+
+      // Extract technician counts STRICTLY from sheet data (j.responsible only)
+      const techCounts = {};
+      let jayCount = 0;
+
+      appData.all_pending_jobs.forEach(j => {
+        const sheetResp = (j.responsible || '').trim() || 'ไม่ระบุ';
+        if (j.is_jay || sheetResp.includes('เจ')) {
+          jayCount++;
+        }
+        techCounts[sheetResp] = (techCounts[sheetResp] || 0) + 1;
+      });
+
+      // Filter and sort technicians strictly from sheet
+      const priorityOrder = ['ช่างเจ', 'งานระบบ'];
+      const otherTechs = Object.keys(techCounts)
+        .filter(t => !priorityOrder.includes(t))
+        .sort((a, b) => techCounts[b] - techCounts[a]);
+
+      const totalAll = appData.all_pending_jobs.length;
+
+      let html = '';
+      html += `<option value="ช่างเจ">ช่างเจ (${jayCount} งาน) [ค่าเริ่มต้น]</option>`;
+      if (techCounts['งานระบบ']) {
+        html += `<option value="งานระบบ">งานระบบ (${techCounts['งานระบบ']} งาน)</option>`;
+      }
+      html += `<option value="all">ช่างทั้งหมด (${totalAll} งาน)</option>`;
+
+      otherTechs.forEach(t => {
+        html += `<option value="${t}">${t} (${techCounts[t]} งาน)</option>`;
+      });
+
+      if (tSelect) {
+        tSelect.innerHTML = html;
+        tSelect.value = selectedTechnician;
+      }
+      if (tHeaderSelect) {
+        tHeaderSelect.innerHTML = html;
+        tHeaderSelect.value = selectedTechnician;
+      }
+
+      const techDisplay = (selectedTechnician === 'all' ? 'ช่างทั้งหมด' : selectedTechnician);
+      const hTechName = document.getElementById('headerTechName');
+      if (hTechName) hTechName.textContent = techDisplay;
+
+      const activeBadge = document.getElementById('activeSheetTechBadge');
+      if (activeBadge) activeBadge.textContent = techDisplay;
+
+      const tab1Badge = document.getElementById('tab1ActiveTechBadge');
+      if (tab1Badge) tab1Badge.textContent = techDisplay;
+
+      const mTechBadge = document.getElementById('mapTechBadge');
+      if (mTechBadge) mTechBadge.textContent = (selectedTechnician === 'all' ? 'งานช่างทั้งหมด' : `งาน${selectedTechnician}`);
+    }
+
+    function onSelectTechnician(val) {
+      selectedTechnician = val;
+      const tSelect = document.getElementById('technicianSelect');
+      const tHeaderSelect = document.getElementById('technicianSelectHeader');
+      if (tSelect) tSelect.value = val;
+      if (tHeaderSelect) tHeaderSelect.value = val;
+
+      const techDisplay = (val === 'all' ? 'ช่างทั้งหมด' : val);
+      const hTechName = document.getElementById('headerTechName');
+      if (hTechName) hTechName.textContent = techDisplay;
+
+      const activeBadge = document.getElementById('activeSheetTechBadge');
+      if (activeBadge) activeBadge.textContent = techDisplay;
+
+      const tab1Badge = document.getElementById('tab1ActiveTechBadge');
+      if (tab1Badge) tab1Badge.textContent = techDisplay;
+
+      const mTechBadge = document.getElementById('mapTechBadge');
+      if (mTechBadge) mTechBadge.textContent = (val === 'all' ? 'งานช่างทั้งหมด' : `งาน${val}`);
+
+      try {
+        localStorage.setItem('GBH_SELECTED_TECH', val);
+      } catch(e) {}
+
+      // Reset province and branch to give clear view for newly selected technician
+      selectedProvince = null;
+      selectedBranch = 'all';
+      selectedZone = 'all';
+      currentRegionFilter = 'all';
+
+      document.querySelectorAll('.province-path').forEach(el => {
+        el.classList.remove('selected');
+        el.style.opacity = '1';
+      });
+
+      populateZoneOptions();
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      renderKPIs();
+      renderThailandMap();
+      renderTopProvincesBadges();
+      updateClearFilterBtnVisibility();
+      renderTaskList();
+      renderExcelTable();
+
+      const label = (val === 'all' ? 'ช่างทั้งหมด' : val);
+      showToast(`กรองข้อมูลงานของ: ${label}`);
+    }
 
     // Init function
     window.addEventListener('DOMContentLoaded', async () => {
@@ -601,6 +1082,15 @@
       // Merge custom edits
       mergeCustomEdits();
 
+      // Populate Technician, Zone & Branch options
+      populateTechnicianOptions();
+      populateZoneOptions();
+      populateBranchOptions();
+
+      // Render branch interactive pills under active title
+      renderBranchPills();
+      updateActiveBanner();
+
       // Render KPIs
       renderKPIs();
 
@@ -610,36 +1100,54 @@
       // Render Top Provinces quick buttons
       renderTopProvincesBadges();
 
-      // Render Task list for default (All or Khon Kaen)
+      // Render Task list for default
       renderTaskList();
+
+      // Initialize Excel table count badge
+      renderExcelTable();
+
+      // Automatically trigger update from Google Sheet with popup on file open
+      openSyncModal('กำลังอัปเดตข้อมูลจากชีต...', 'ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมสดจาก Google Sheet แบบเรียลไทม์ กรุณารอสักครู่');
+      performSheetSync(true);
     });
 
     function mergeCustomEdits() {
       if (!appData || !appData.all_pending_jobs) return;
       appData.all_pending_jobs.forEach(job => {
+        if (!job.responsible || job.responsible === '-') {
+          job.responsible = 'ไม่ระบุ';
+        }
         if (customEdits[job.id]) {
           const ed = customEdits[job.id];
+          if (ed.custom_job_no !== undefined) {
+            job.custom_job_no = ed.custom_job_no;
+            if (ed.custom_job_no) job.job_no = ed.custom_job_no;
+          }
           if (ed.custom_responsible !== undefined) job.custom_responsible = ed.custom_responsible;
           if (ed.custom_contractor !== undefined) job.custom_contractor = ed.custom_contractor;
-          if (ed.custom_notes !== undefined) job.custom_notes = ed.custom_notes;
-          if (ed.custom_site_status !== undefined) job.custom_site_status = ed.custom_site_status;
+          job.custom_notes = (ed.custom_notes !== undefined) ? ed.custom_notes : '';
+          job.custom_site_status = (ed.custom_site_status !== undefined) ? ed.custom_site_status : '';
           if (ed.custom_contact !== undefined) job.custom_contact = ed.custom_contact;
+        } else {
+          job.custom_site_status = '';
+          job.custom_notes = '';
         }
       });
     }
 
     function renderKPIs() {
+      const baseJobs = getJobsForSelectedTechnician();
       document.getElementById('headerLastUpdated').textContent = appData.last_updated || 'วันนี้';
-      document.getElementById('kpiTotalPending').textContent = (appData.all_pending_jobs || []).length;
+      document.getElementById('kpiTotalPending').textContent = baseJobs.length;
       
       // Provinces with pending
-      const provs = new Set(appData.all_pending_jobs.map(j => j.province));
+      const provs = new Set(baseJobs.map(j => j.province));
       document.getElementById('kpiTotalProvinces').textContent = provs.size;
 
       // Status breakdown
       const stats = {};
       let contractorCount = 0;
-      appData.all_pending_jobs.forEach(j => {
+      baseJobs.forEach(j => {
         stats[j.status] = (stats[j.status] || 0) + 1;
         if (j.custom_contractor && j.custom_contractor.trim()) {
           contractorCount++;
@@ -668,10 +1176,11 @@
       }
       svg.innerHTML = '';
 
-      // Count tasks per province
+      // Count tasks per province for selected technician
+      const baseJobs = getJobsForSelectedTechnician();
       const counts = {};
       const branchesByProv = {};
-      appData.all_pending_jobs.forEach(j => {
+      baseJobs.forEach(j => {
         counts[j.province] = (counts[j.province] || 0) + 1;
         if (!branchesByProv[j.province]) branchesByProv[j.province] = new Set();
         if (j.branch) branchesByProv[j.province].add(j.branch);
@@ -720,8 +1229,300 @@
       tooltip.classList.add('opacity-0');
     }
 
+    function populateZoneOptions() {
+      if (!appData || !appData.all_pending_jobs) return;
+      const zoneSelect = document.getElementById('zoneSelect');
+      const leftZoneSelect = document.getElementById('leftZoneSelect');
+      if (!zoneSelect && !leftZoneSelect) return;
+
+      const baseJobs = getJobsForSelectedTechnician();
+      const zoneCounts = {};
+      baseJobs.forEach(j => {
+        const z = (j.zone || '').trim() || 'ไม่ระบุเขต';
+        zoneCounts[z] = (zoneCounts[z] || 0) + 1;
+      });
+
+      // Sort zones naturally
+      const sortedZones = Object.keys(zoneCounts).sort((a, b) => {
+        if (a === 'ไม่ระบุเขต') return 1;
+        if (b === 'ไม่ระบุเขต') return -1;
+        return a.localeCompare(b, 'th', { numeric: true });
+      });
+
+      const buildOptions = (totalText) => {
+        let html = `<option value="all">${totalText}</option>`;
+        sortedZones.forEach(z => {
+          html += `<option value="${z}">${z} (${zoneCounts[z]} งาน)</option>`;
+        });
+        return html;
+      };
+
+      if (zoneSelect) {
+        zoneSelect.innerHTML = buildOptions(`ทุกเขต (ทั้งหมด ${baseJobs.length} งาน)`);
+        zoneSelect.value = selectedZone;
+      }
+      if (leftZoneSelect) {
+        leftZoneSelect.innerHTML = buildOptions(`ทุกเขต (${sortedZones.length} เขต)`);
+        leftZoneSelect.value = selectedZone;
+      }
+    }
+
+    function populateBranchOptions() {
+      if (!appData || !appData.all_pending_jobs) return;
+      const branchSelect = document.getElementById('branchSelect');
+      if (!branchSelect) return;
+
+      // Filter candidates based on current technician, province and zone
+      let candidates = getJobsForSelectedTechnician();
+      if (selectedProvince) {
+        candidates = candidates.filter(j => j.province === selectedProvince);
+      }
+      if (selectedZone && selectedZone !== 'all') {
+        candidates = candidates.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+      }
+
+      const branchCounts = {};
+      candidates.forEach(j => {
+        if (j.branch) {
+          branchCounts[j.branch] = (branchCounts[j.branch] || 0) + 1;
+        }
+      });
+
+      const sortedBranches = Object.keys(branchCounts).sort((a, b) => a.localeCompare(b, 'th'));
+
+      // If currently selected branch doesn't exist in candidates, reset to 'all'
+      if (selectedBranch !== 'all' && !branchCounts[selectedBranch]) {
+        selectedBranch = 'all';
+      }
+
+      let defaultLabel = 'ทุกสาขา';
+      if (selectedProvince) {
+        defaultLabel = `ทุกสาขาในจังหวัด${selectedProvince} (${candidates.length} งาน)`;
+      } else if (selectedZone !== 'all') {
+        defaultLabel = `ทุกสาขาใน${selectedZone} (${candidates.length} งาน)`;
+      } else {
+        defaultLabel = `ทุกสาขา (${sortedBranches.length} สาขา, ${candidates.length} งาน)`;
+      }
+
+      let html = `<option value="all">${defaultLabel}</option>`;
+      sortedBranches.forEach(b => {
+        html += `<option value="${b}">สาขา${b} (${branchCounts[b]} งาน)</option>`;
+      });
+
+      branchSelect.innerHTML = html;
+      branchSelect.value = selectedBranch;
+    }
+
+    function renderBranchPills() {
+      const container = document.getElementById('branchPillsContainer');
+      if (!container || !appData || !appData.all_pending_jobs) return;
+      container.innerHTML = '';
+
+      let candidates = getJobsForSelectedTechnician();
+      if (selectedProvince) {
+        candidates = candidates.filter(j => j.province === selectedProvince);
+      }
+      if (selectedZone && selectedZone !== 'all') {
+        candidates = candidates.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+      }
+
+      const branchCounts = {};
+      candidates.forEach(j => {
+        if (j.branch) {
+          branchCounts[j.branch] = (branchCounts[j.branch] || 0) + 1;
+        }
+      });
+
+      const branchNames = Object.keys(branchCounts).sort((a, b) => a.localeCompare(b, 'th'));
+      const techLabel = (selectedTechnician === 'all' ? 'ช่างทั้งหมด' : selectedTechnician);
+
+      if (!selectedProvince && selectedZone === 'all') {
+        container.innerHTML = `
+          <span class="text-xs text-slate-500">
+            สาขา: แสดงงานค้างทุกสาขาของ${techLabel} (${branchNames.length} สาขาทั่วประเทศ)
+          </span>
+        `;
+        return;
+      }
+
+      const label = document.createElement('span');
+      label.className = 'text-xs font-bold text-slate-600 mr-1 flex items-center gap-1';
+      label.innerHTML = `<span>สาขาที่พบงานค้าง:</span>`;
+      container.appendChild(label);
+
+      // Button for "ทุกสาขา"
+      const isAllActive = (selectedBranch === 'all');
+      const allBtn = document.createElement('button');
+      allBtn.className = `text-xs px-2.5 py-0.5 rounded-full font-semibold transition border flex items-center gap-1.5 ${
+        isAllActive
+          ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
+          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+      }`;
+      allBtn.innerHTML = `<span>ทั้งหมด</span> <span class="${isAllActive ? 'bg-sky-700 text-white' : 'bg-slate-200 text-slate-700'} text-[10px] px-1.5 py-0.2 rounded-full font-bold">${candidates.length}</span>`;
+      allBtn.onclick = () => onSelectBranch('all');
+      container.appendChild(allBtn);
+
+      // Buttons for each branch
+      branchNames.forEach(bName => {
+        const isActive = (selectedBranch === bName);
+        const cnt = branchCounts[bName];
+        const btn = document.createElement('button');
+        btn.className = `text-xs px-2.5 py-0.5 rounded-full font-medium transition border flex items-center gap-1.5 ${
+          isActive
+            ? 'bg-amber-500 text-white border-amber-600 font-bold shadow-sm'
+            : 'bg-white hover:bg-amber-50 text-slate-700 border-slate-200 hover:border-amber-300'
+        }`;
+        btn.innerHTML = `<span>${bName}</span> <span class="${isActive ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'} text-[10px] px-1.5 py-0.2 rounded-full font-bold">${cnt}</span>`;
+        btn.onclick = () => onSelectBranch(bName);
+        container.appendChild(btn);
+      });
+    }
+
+    function updateActiveBanner(filteredCount) {
+      const titleEl = document.getElementById('activeProvinceTitle');
+      const badgeEl = document.getElementById('activeProvinceBadge');
+      if (!titleEl || !badgeEl) return;
+
+      let titleText = 'ทุกจังหวัด (ภาพรวม)';
+      if (selectedProvince && selectedBranch !== 'all') {
+        titleText = `จังหวัด${selectedProvince} ➔ สาขา${selectedBranch}`;
+      } else if (selectedProvince) {
+        titleText = `จังหวัด${selectedProvince}`;
+      } else if (selectedZone !== 'all' && selectedBranch !== 'all') {
+        titleText = `${selectedZone} ➔ สาขา${selectedBranch}`;
+      } else if (selectedZone !== 'all') {
+        titleText = `${selectedZone} (ภาพรวม)`;
+      } else if (selectedBranch !== 'all') {
+        titleText = `สาขา${selectedBranch}`;
+      }
+
+      titleEl.textContent = titleText;
+
+      // Count if not provided
+      if (filteredCount === undefined) {
+        let jobs = getJobsForSelectedTechnician();
+        if (selectedZone !== 'all') {
+          jobs = jobs.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+        }
+        if (selectedProvince) {
+          jobs = jobs.filter(j => j.province === selectedProvince);
+        }
+        if (selectedBranch !== 'all') {
+          jobs = jobs.filter(j => j.branch === selectedBranch);
+        }
+        filteredCount = jobs.length;
+      }
+
+      badgeEl.textContent = `${filteredCount} งานค้าง`;
+    }
+
+    function updateClearFilterBtnVisibility() {
+      const btn = document.getElementById('btnClearFilters');
+      if (!btn) return;
+      const isFiltered = (selectedProvince !== null) || 
+                         (selectedZone !== 'all') || 
+                         (selectedBranch !== 'all') || 
+                         (currentStatusFilter !== 'all') ||
+                         (currentRegionFilter !== 'all') ||
+                         (document.getElementById('taskSearchInput') && document.getElementById('taskSearchInput').value.trim() !== '') ||
+                         (document.getElementById('provinceSearch') && document.getElementById('provinceSearch').value.trim() !== '');
+      if (isFiltered) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+      } else {
+        btn.classList.remove('flex');
+        btn.classList.add('hidden');
+      }
+    }
+
+    function onSelectZone(zoneVal) {
+      selectedZone = zoneVal;
+      const z1 = document.getElementById('zoneSelect');
+      const z2 = document.getElementById('leftZoneSelect');
+      if (z1) z1.value = zoneVal;
+      if (z2) z2.value = zoneVal;
+
+      // If a province was selected, verify if it still has jobs in this zone
+      const baseJobs = getJobsForSelectedTechnician();
+      if (selectedProvince && zoneVal !== 'all') {
+        const hasJobInZone = baseJobs.some(j => 
+          j.province === selectedProvince && (((j.zone || '').trim() || 'ไม่ระบุเขต') === zoneVal)
+        );
+        if (!hasJobInZone) {
+          selectedProvince = null;
+          document.querySelectorAll('.province-path').forEach(el => el.classList.remove('selected'));
+        }
+      }
+
+      // Reset selected branch to all when zone changes
+      selectedBranch = 'all';
+
+      // Update map highlight for zone
+      const svgPaths = document.querySelectorAll('.province-path');
+      if (zoneVal !== 'all') {
+        const zoneProvinces = new Set(
+          baseJobs
+            .filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === zoneVal)
+            .map(j => j.province)
+        );
+        svgPaths.forEach(p => {
+          const pName = p.getAttribute('data-name');
+          p.style.opacity = zoneProvinces.has(pName) ? '1' : '0.15';
+        });
+        // Deactivate geographic region pills
+        document.querySelectorAll('.region-pill').forEach(b => b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300'));
+      } else {
+        // Restore based on currentRegionFilter
+        svgPaths.forEach(p => {
+          const pName = p.getAttribute('data-name');
+          if (currentRegionFilter === 'all') {
+            p.style.opacity = '1';
+          } else {
+            const list = REGIONS[currentRegionFilter] || [];
+            p.style.opacity = list.includes(pName) ? '1' : '0.15';
+          }
+        });
+      }
+
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
+      renderTaskList();
+    }
+
+    function onSelectBranch(branchVal) {
+      selectedBranch = branchVal;
+      const bSel = document.getElementById('branchSelect');
+      if (bSel) bSel.value = branchVal;
+
+      if (branchVal !== 'all') {
+        // If no province is selected, auto-select branch's province and highlight on map
+        if (!selectedProvince) {
+          const baseJobs = getJobsForSelectedTechnician();
+          const match = baseJobs.find(j => j.branch === branchVal);
+          if (match && match.province) {
+            selectedProvince = match.province;
+            document.querySelectorAll('.province-path').forEach(el => {
+              if (el.getAttribute('data-name') === selectedProvince) {
+                el.classList.add('selected');
+              } else {
+                el.classList.remove('selected');
+              }
+            });
+          }
+        }
+      }
+
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
+      renderTaskList();
+    }
+
     function selectProvince(provinceName) {
       selectedProvince = provinceName;
+      selectedBranch = 'all';
 
       // Update map highlight
       document.querySelectorAll('.province-path').forEach(el => {
@@ -732,25 +1533,83 @@
         }
       });
 
-      // Update active banner
-      const provJobs = appData.all_pending_jobs.filter(j => j.province === provinceName);
-      const branches = Array.from(new Set(provJobs.map(j => j.branch))).filter(Boolean);
+      // If a zone is active, check if this province belongs to it
+      if (selectedZone !== 'all') {
+        const baseJobs = getJobsForSelectedTechnician();
+        const belongsToZone = baseJobs.some(j => 
+          j.province === provinceName && (((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone)
+        );
+        if (!belongsToZone) {
+          selectedZone = 'all';
+          const z1 = document.getElementById('zoneSelect');
+          const z2 = document.getElementById('leftZoneSelect');
+          if (z1) z1.value = 'all';
+          if (z2) z2.value = 'all';
+        }
+      }
 
-      document.getElementById('activeProvinceTitle').textContent = `จังหวัด${provinceName}`;
-      document.getElementById('activeProvinceBadge').textContent = `${provJobs.length} งานค้าง`;
-      document.getElementById('activeProvinceSubtitle').textContent = branches.length > 0 
-        ? `สาขาที่พบงานค้าง: ${branches.join(', ')}`
-        : 'ไม่พบสาขาที่มีงานค้าง';
-
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
       renderTaskList();
     }
 
     function resetSelectedProvince() {
       selectedProvince = null;
+      selectedBranch = 'all';
       document.querySelectorAll('.province-path').forEach(el => el.classList.remove('selected'));
-      document.getElementById('activeProvinceTitle').textContent = 'ทุกจังหวัด (ภาพรวม)';
-      document.getElementById('activeProvinceBadge').textContent = `${appData.all_pending_jobs.length} งาน`;
-      document.getElementById('activeProvinceSubtitle').textContent = 'สาขา: แสดงงานค้างทุกสาขาของช่างเจ';
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
+      renderTaskList();
+    }
+
+    function resetAllFilters() {
+      selectedProvince = null;
+      selectedZone = 'all';
+      selectedBranch = 'all';
+      currentStatusFilter = 'all';
+      currentRegionFilter = 'all';
+
+      const tSearch = document.getElementById('taskSearchInput');
+      if (tSearch) tSearch.value = '';
+      const pSearch = document.getElementById('provinceSearch');
+      if (pSearch) pSearch.value = '';
+
+      const z1 = document.getElementById('zoneSelect');
+      const z2 = document.getElementById('leftZoneSelect');
+      if (z1) z1.value = 'all';
+      if (z2) z2.value = 'all';
+
+      const bSel = document.getElementById('branchSelect');
+      if (bSel) bSel.value = 'all';
+
+      // Restore map paths
+      document.querySelectorAll('.province-path').forEach(el => {
+        el.classList.remove('selected');
+        el.style.opacity = '1';
+      });
+
+      // Reset status buttons
+      document.querySelectorAll('.status-btn').forEach(b => {
+        b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+      });
+      const firstStat = document.querySelector('.status-btn');
+      if (firstStat) firstStat.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+
+      // Reset region pills
+      document.querySelectorAll('.region-pill').forEach(b => {
+        b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+      });
+      const firstRegion = document.querySelector('.region-pill');
+      if (firstRegion) firstRegion.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
       renderTaskList();
     }
 
@@ -758,8 +1617,9 @@
       const container = document.getElementById('topProvincesBadges');
       container.innerHTML = '';
 
+      const baseJobs = getJobsForSelectedTechnician();
       const counts = {};
-      appData.all_pending_jobs.forEach(j => {
+      baseJobs.forEach(j => {
         counts[j.province] = (counts[j.province] || 0) + 1;
       });
 
@@ -776,6 +1636,12 @@
     // Filter by Region on Map
     function filterRegion(regionKey) {
       currentRegionFilter = regionKey;
+      selectedZone = 'all'; // reset zone when user explicitly picks geographic region
+      const z1 = document.getElementById('zoneSelect');
+      const z2 = document.getElementById('leftZoneSelect');
+      if (z1) z1.value = 'all';
+      if (z2) z2.value = 'all';
+
       document.querySelectorAll('.region-pill').forEach(b => b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300'));
       event.target.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
 
@@ -789,11 +1655,18 @@
           p.style.opacity = list.includes(pName) ? '1' : '0.15';
         }
       });
+
+      populateBranchOptions();
+      renderBranchPills();
+      updateActiveBanner();
+      updateClearFilterBtnVisibility();
+      renderTaskList();
     }
 
     function filterProvincesList(query) {
       if (!query.trim()) {
         document.querySelectorAll('.province-path').forEach(p => p.style.opacity = '1');
+        updateClearFilterBtnVisibility();
         return;
       }
       const q = query.trim().toLowerCase();
@@ -805,6 +1678,7 @@
           p.style.opacity = '0.15';
         }
       });
+      updateClearFilterBtnVisibility();
     }
 
     // Filter Status buttons
@@ -812,10 +1686,12 @@
       currentStatusFilter = status;
       document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300'));
       event.target.classList.add('active', 'bg-sky-100', 'text-sky-800', 'border-sky-300');
+      updateClearFilterBtnVisibility();
       renderTaskList();
     }
 
     function filterTasks() {
+      updateClearFilterBtnVisibility();
       renderTaskList();
     }
 
@@ -826,10 +1702,16 @@
 
       const query = (document.getElementById('taskSearchInput').value || '').trim().toLowerCase();
 
-      // 1. Filter jobs
-      let jobs = appData.all_pending_jobs;
+      // 1. Filter jobs (scoped by selected technician)
+      let jobs = getJobsForSelectedTechnician();
+      if (selectedZone && selectedZone !== 'all') {
+        jobs = jobs.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+      }
       if (selectedProvince) {
         jobs = jobs.filter(j => j.province === selectedProvince);
+      }
+      if (selectedBranch && selectedBranch !== 'all') {
+        jobs = jobs.filter(j => j.branch === selectedBranch);
       }
       if (currentStatusFilter !== 'all') {
         jobs = jobs.filter(j => j.status === currentStatusFilter);
@@ -839,11 +1721,19 @@
           (j.no && j.no.toLowerCase().includes(query)) ||
           (j.job_no && j.job_no.toLowerCase().includes(query)) ||
           (j.branch && j.branch.toLowerCase().includes(query)) ||
+          (j.province && j.province.toLowerCase().includes(query)) ||
+          (j.zone && j.zone.toLowerCase().includes(query)) ||
+          (j.responsible && j.responsible.toLowerCase().includes(query)) ||
+          (j.custom_responsible && j.custom_responsible.toLowerCase().includes(query)) ||
           (j.nature && j.nature.toLowerCase().includes(query)) ||
           (j.desc && j.desc.toLowerCase().includes(query)) ||
           (j.custom_contractor && j.custom_contractor.toLowerCase().includes(query))
         );
       }
+
+      // Update banner badge with current count
+      updateActiveBanner(jobs.length);
+      updateClearFilterBtnVisibility();
 
       if (jobs.length === 0) {
         container.innerHTML = `
@@ -915,10 +1805,38 @@
           else if (job.status === 'รอใบเสนอราคา') statusBadgeClass = 'bg-purple-50 text-purple-700 border-purple-200 font-semibold';
 
           // Contractor badge
-          const hasContractor = job.custom_contractor && job.custom_contractor.trim();
+          const hasContractor = Boolean(job.custom_contractor && job.custom_contractor.trim());
           const contractorTag = hasContractor
             ? `<span class="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-md font-semibold border border-emerald-200">👷 ${job.custom_contractor}</span>`
             : `<span class="bg-slate-50 text-slate-400 text-xs px-2 py-0.5 rounded-md border border-dashed border-slate-300">ยังไม่ระบุ ผรม.</span>`;
+
+          // Site status badge (สถานะหน้างาน)
+          const hasSiteStatus = Boolean(job.custom_site_status && job.custom_site_status.trim());
+          let siteStatusTag = '';
+          if (hasSiteStatus) {
+            let statusColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+            if (job.custom_site_status.includes('เสร็จ') || job.custom_site_status.includes('สำเร็จ')) {
+              statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            } else if (job.custom_site_status.includes('ดำเนินการ') || job.custom_site_status.includes('กำลัง')) {
+              statusColor = 'bg-sky-50 text-sky-700 border-sky-200';
+            } else if (job.custom_site_status.includes('รอ') || job.custom_site_status.includes('จัดทำ')) {
+              statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+            } else if (job.custom_site_status.includes('ยกเลิก')) {
+              statusColor = 'bg-rose-50 text-rose-700 border-rose-200';
+            }
+            siteStatusTag = `<span class="${statusColor} text-xs px-2.5 py-0.5 rounded-md font-bold border flex items-center gap-1 shadow-xs">📊 ${job.custom_site_status}</span>`;
+          } else {
+            siteStatusTag = `<span class="bg-slate-50 text-slate-400 text-xs px-2 py-0.5 rounded-md border border-dashed border-slate-300 flex items-center gap-1">📊 ยังไม่ระบุสถานะหน้างาน</span>`;
+          }
+
+          // Notes block (หมายเหตุ ถ้ามีกรอก)
+          const hasNotes = Boolean(job.custom_notes && job.custom_notes.trim());
+          const notesBlock = hasNotes ? `
+            <div class="bg-amber-50/80 border border-amber-200/90 rounded-lg p-2.5 text-xs text-amber-900 flex items-start gap-1.5 shadow-xs">
+              <span class="text-amber-700 font-bold shrink-0 flex items-center gap-1">💬 หมายเหตุ:</span>
+              <span class="leading-relaxed whitespace-pre-line text-slate-800 font-medium">${job.custom_notes}</span>
+            </div>
+          ` : '';
 
           card.innerHTML = `
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
@@ -941,11 +1859,15 @@
               <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed whitespace-pre-line">${job.desc || '-'}</p>
             </div>
 
-            <!-- Card Footer: Responsible & Contractor -->
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
-              <div class="flex items-center gap-2">
+            <!-- Notes if entered -->
+            ${notesBlock}
+
+            <!-- Card Footer: Responsible & Contractor & Site Status -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 text-xs border-t border-slate-50">
+              <div class="flex flex-wrap items-center gap-2">
                 <span class="text-slate-500 text-[11px]">ผู้รับผิดชอบ: <b class="text-slate-800">${job.custom_responsible || job.responsible || 'ช่างเจ'}</b></span>
                 ${contractorTag}
+                ${siteStatusTag}
               </div>
               <span class="text-sky-600 text-xs font-semibold group-hover:translate-x-0.5 transition flex items-center gap-0.5">
                 ดูรายละเอียด/กรอกข้อมูล ➔
@@ -968,6 +1890,20 @@
     }
 
     // MODAL FUNCTIONS
+    
+    function onModalResponsibleChange(val) {
+      const inp = document.getElementById('inputResponsible');
+      if (!inp) return;
+      if (val === '__custom__') {
+        inp.classList.remove('hidden');
+        inp.value = '';
+        inp.focus();
+      } else {
+        inp.classList.add('hidden');
+        inp.value = val;
+      }
+    }
+
     function openModal(job) {
       activeJob = job;
       document.getElementById('editJobId').value = job.id;
@@ -982,8 +1918,11 @@
          job.status === 'รอดำเนินการ' ? 'bg-amber-400 text-amber-950' : 'bg-purple-400 text-purple-950');
 
       // Fill sheet values
+      const currentJobNo = job.custom_job_no || job.job_no || '';
       document.getElementById('modalNo').textContent = job.no || '-';
-      document.getElementById('modalJobNo').textContent = job.job_no || '-';
+      document.getElementById('modalJobNo').textContent = currentJobNo || '-';
+      const mJobNoInput = document.getElementById('inputJobNo');
+      if (mJobNoInput) mJobNoInput.value = currentJobNo;
       document.getElementById('modalDate').textContent = job.date || '-';
       document.getElementById('modalZoneBranch').textContent = `${job.zone || '-'} / สาขา${job.branch}`;
       document.getElementById('modalCategory').textContent = job.category || '-';
@@ -994,9 +1933,37 @@
       document.getElementById('modalTender').textContent = job.tender || '-';
 
       // Fill editable inputs
-      document.getElementById('inputResponsible').value = job.custom_responsible || job.responsible || 'ช่างเจ';
+      const curRespVal = (job.custom_responsible || job.responsible || 'งานระบบ').trim();
+      const mRespSelect = document.getElementById('selectModalResponsible');
+      const mRespInput = document.getElementById('inputResponsible');
+      if (mRespSelect) {
+        mRespSelect.innerHTML = buildResponsibleOptions(curRespVal);
+        mRespSelect.value = curRespVal;
+      }
+      if (mRespInput) {
+        mRespInput.value = curRespVal;
+        mRespInput.classList.add('hidden');
+      }
       document.getElementById('inputContractor').value = job.custom_contractor || job.operator || '';
-      document.getElementById('inputSiteStatus').value = job.custom_site_status || job.site_status || '';
+      
+      const siteSelect = document.getElementById('inputSiteStatus');
+      const curSiteStatus = job.custom_site_status || '';
+      // Check if current status option exists, if not add dynamically
+      let optFound = false;
+      for (let i = 0; i < siteSelect.options.length; i++) {
+        if (siteSelect.options[i].value === curSiteStatus) {
+          optFound = true;
+          break;
+        }
+      }
+      if (!optFound && curSiteStatus) {
+        const dynOpt = document.createElement('option');
+        dynOpt.value = curSiteStatus;
+        dynOpt.textContent = curSiteStatus;
+        siteSelect.appendChild(dynOpt);
+      }
+      siteSelect.value = curSiteStatus;
+
       document.getElementById('inputContractorContact').value = job.custom_contact || '';
       document.getElementById('inputNotes').value = job.custom_notes || '';
 
@@ -1015,6 +1982,7 @@
       if (!activeJob) return;
 
       const jobId = document.getElementById('editJobId').value;
+      const jobNo = document.getElementById('inputJobNo') ? document.getElementById('inputJobNo').value.trim() : '';
       const resp = document.getElementById('inputResponsible').value.trim();
       const contractor = document.getElementById('inputContractor').value.trim();
       const siteStat = document.getElementById('inputSiteStatus').value.trim();
@@ -1022,6 +1990,7 @@
       const notes = document.getElementById('inputNotes').value.trim();
 
       const editData = {
+        custom_job_no: jobNo,
         custom_responsible: resp,
         custom_contractor: contractor,
         custom_site_status: siteStat,
@@ -1033,11 +2002,16 @@
       customEdits[jobId] = editData;
 
       // Update in memory
+      activeJob.custom_job_no = jobNo;
+      if (jobNo) activeJob.job_no = jobNo;
       activeJob.custom_responsible = resp;
       activeJob.custom_contractor = contractor;
       activeJob.custom_site_status = siteStat;
       activeJob.custom_contact = contact;
       activeJob.custom_notes = notes;
+
+      const mJobNoEl = document.getElementById('modalJobNo');
+      if (mJobNoEl) mJobNoEl.textContent = jobNo || activeJob.job_no || '-';
 
       // Save to localStorage
       try {
@@ -1057,8 +2031,15 @@
 
       showToast('บันทึกข้อมูล ผรม. และผู้รับผิดชอบ เรียบร้อยแล้ว!');
       closeModal();
+      populateTechnicianOptions();
+      populateZoneOptions();
+      populateBranchOptions();
+      renderBranchPills();
       renderKPIs();
+      renderThailandMap();
+      renderTopProvincesBadges();
       renderTaskList();
+      renderExcelTable();
     }
 
     function showToast(msg) {
@@ -1157,6 +2138,7 @@
       const col = (r, idx) => (r && r[idx] !== undefined) ? r[idx].trim() : '';
       const allJobs = [];
       const jayPendingJobs = [];
+      const allPendingJobs = [];
 
       for (let rIdx = 1; rIdx < rows.length; rIdx++) {
         const r = rows[rIdx];
@@ -1176,7 +2158,10 @@
         const closeDate = col(r, 10);
         const operator = col(r, 11);
         const status = col(r, 12);
-        const responsible = col(r, 13);
+        let responsible = col(r, 13);
+        if (!responsible || responsible === '-') {
+          responsible = 'ไม่ระบุ';
+        }
         const zone = col(r, 14);
         const siteStatus = col(r, 15);
         const remark = col(r, 16);
@@ -1229,17 +2214,27 @@
         };
 
         allJobs.push(jobItem);
-        if (isJay && !isClosed) {
-          jayPendingJobs.push(jobItem);
+        if (!isClosed) {
+          allPendingJobs.push(jobItem);
+          if (isJay) {
+            jayPendingJobs.push(jobItem);
+          }
         }
       }
 
-      // Sort: province -> category (Col D) -> no_num ascending
-      jayPendingJobs.sort((a, b) => {
+      // Sort all pending jobs: province -> category (Col D) -> no_num ascending
+      allPendingJobs.sort((a, b) => {
         if (a.province !== b.province) return a.province.localeCompare(b.province);
         if (a.category !== b.category) return a.category.localeCompare(b.category);
         if (a.no_num !== b.no_num) return a.no_num - b.no_num;
         return a.no.localeCompare(b.no);
+      });
+
+      // Count technicians strictly from sheet's column N (responsible)
+      const techCounts = {};
+      allPendingJobs.forEach(j => {
+        const resp = (j.responsible || '').trim() || 'ไม่ระบุ';
+        techCounts[resp] = (techCounts[resp] || 0) + 1;
       });
 
       // Group by province
@@ -1247,7 +2242,7 @@
       const statusCounts = {};
       const categoryCounts = {};
 
-      jayPendingJobs.forEach(job => {
+      allPendingJobs.forEach(job => {
         statusCounts[job.status] = (statusCounts[job.status] || 0) + 1;
         categoryCounts[job.category] = (categoryCounts[job.category] || 0) + 1;
 
@@ -1286,27 +2281,102 @@
         last_updated: nowStr,
         last_synced: nowTh,
         total_rows_sheet: rows.length - 1,
+        total_pending_all: allPendingJobs.length,
         total_jay_jobs: allJobs.filter(j => j.is_jay).length,
         total_jay_pending: jayPendingJobs.length,
+        technicians: techCounts,
         total_provinces_with_pending: Object.keys(provincesSummary).length,
         status_counts: statusCounts,
         category_counts: categoryCounts,
         provinces: provincesSummary,
-        all_pending_jobs: jayPendingJobs
+        all_pending_jobs: allPendingJobs
       };
     }
 
 
     // Sync from Google Sheet (Direct Live + Server fallback)
-    async function triggerSync() {
+    // =========================================================================
+    // SYNC MODAL POPUP & AUTO-UPDATE FROM SHEET
+    // =========================================================================
+    function openSyncModal(title = 'กำลังอัปเดตข้อมูลจากชีต...', desc = 'ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมล่าสุดจาก Google Sheet กรุณารอสักครู่') {
+      const modal = document.getElementById('syncModal');
+      const spinner = document.getElementById('syncModalSpinner');
+      const successIcon = document.getElementById('syncModalSuccessIcon');
+      const warningIcon = document.getElementById('syncModalWarningIcon');
+      const titleEl = document.getElementById('syncModalTitle');
+      const descEl = document.getElementById('syncModalDesc');
+      const bar = document.getElementById('syncModalProgressBar');
+
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.style.opacity = '1';
+      modal.style.pointerEvents = 'auto';
+
+      if (spinner) spinner.classList.remove('hidden');
+      if (successIcon) successIcon.classList.add('hidden');
+      if (warningIcon) warningIcon.classList.add('hidden');
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = desc;
+      if (bar) {
+        bar.className = 'bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-500 h-1.5 rounded-full w-2/3 transition-all duration-300 animate-pulse';
+      }
+    }
+
+    function closeSyncModal() {
+      const modal = document.getElementById('syncModal');
+      if (!modal) return;
+      modal.style.opacity = '0';
+      modal.style.pointerEvents = 'none';
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    function showSyncSuccess(msg = 'อัปเดตข้อมูลจากชีตสำเร็จ!', count = '') {
+      const spinner = document.getElementById('syncModalSpinner');
+      const successIcon = document.getElementById('syncModalSuccessIcon');
+      const titleEl = document.getElementById('syncModalTitle');
+      const descEl = document.getElementById('syncModalDesc');
+      const bar = document.getElementById('syncModalProgressBar');
+
+      if (spinner) spinner.classList.add('hidden');
+      if (successIcon) successIcon.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = msg;
+      if (descEl) descEl.textContent = count ? `ข้อมูลล่าสุดซิงค์เรียบร้อย (พบงานคงค้าง ${count} รายการ)` : 'ดึงข้อมูลสดล่าสุดเรียบร้อยแล้ว';
+      if (bar) {
+        bar.className = 'bg-emerald-500 h-1.5 rounded-full w-full transition-all duration-300';
+      }
+      setTimeout(() => {
+        closeSyncModal();
+      }, 900);
+    }
+
+    function showSyncWarning(msg = 'ใช้ข้อมูลล่าสุดในเครื่อง') {
+      const spinner = document.getElementById('syncModalSpinner');
+      const warningIcon = document.getElementById('syncModalWarningIcon');
+      const titleEl = document.getElementById('syncModalTitle');
+      const descEl = document.getElementById('syncModalDesc');
+      const bar = document.getElementById('syncModalProgressBar');
+
+      if (spinner) spinner.classList.add('hidden');
+      if (warningIcon) warningIcon.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = msg;
+      if (descEl) descEl.textContent = 'ไม่สามารถเชื่อมต่อ Google Sheet ได้ ระบบโหลดข้อมูลล่าสุดที่มีในเครื่องให้แล้ว';
+      if (bar) {
+        bar.className = 'bg-amber-400 h-1.5 rounded-full w-full transition-all duration-300';
+      }
+      setTimeout(() => {
+        closeSyncModal();
+      }, 1800);
+    }
+
+    async function performSheetSync(isAutoOnLoad = false) {
       const btn = document.getElementById('btnSync');
       const icon = document.getElementById('syncIcon');
-      const btnText = btn.querySelector('span');
-      const originalText = btnText ? btnText.textContent : 'ซิงค์ Google Sheet';
-
-      if (btnText) btnText.textContent = 'กำลังดึงข้อมูลสด...';
-      icon.classList.add('animate-spin');
-      btn.disabled = true;
+      if (btn && icon) {
+        icon.classList.add('animate-spin');
+        btn.disabled = true;
+      }
 
       try {
         // 1. Fetch live directly from Google Sheet (with cache buster timestamp)
@@ -1324,10 +2394,16 @@
         const newData = parseAndProcessSheetCSV(csvText);
         appData = newData;
         mergeCustomEdits();
+        populateTechnicianOptions();
+        populateZoneOptions();
+        populateBranchOptions();
+        renderBranchPills();
+        updateActiveBanner();
         renderKPIs();
         renderThailandMap();
         renderTopProvincesBadges();
         renderTaskList();
+        renderExcelTable();
 
         // 3. Save to localStorage
         try {
@@ -1340,41 +2416,62 @@
         } catch(e) {}
 
         const timeStr = newData.last_synced;
-        showToast(`✅ ซิงค์ข้อมูลสดสำเร็จ! พบ ${newData.total_jay_pending} งานค้าง (${timeStr})`);
-
-        // Highlight header time
         const timeHeader = document.getElementById('headerLastUpdated');
         if (timeHeader) {
           timeHeader.textContent = timeStr;
           timeHeader.classList.add('text-amber-300', 'font-bold');
           setTimeout(() => timeHeader.classList.remove('text-amber-300'), 4000);
         }
+
+        showSyncSuccess('อัปเดตข้อมูลจากชีตสำเร็จ!', newData.all_pending_jobs.length);
+        if (!isAutoOnLoad) {
+          showToast(`✅ ซิงค์ข้อมูลสดสำเร็จ! พบ ${newData.all_pending_jobs.length} งานคงค้าง (${timeStr})`);
+        }
+
       } catch (err) {
         console.warn('Direct Google Sheet fetch failed, trying local server:', err);
-        // Fallback: local server
+        let fallbackSuccess = false;
         try {
           const sRes = await fetch('/api/sync', { method: 'POST', cache: 'no-store' });
           if (sRes.ok) {
             const sData = await sRes.json();
             appData = sData;
             mergeCustomEdits();
+            populateTechnicianOptions();
+            populateZoneOptions();
+            populateBranchOptions();
+            renderBranchPills();
+            updateActiveBanner();
             renderKPIs();
             renderThailandMap();
             renderTopProvincesBadges();
             renderTaskList();
-            showToast(`✅ ดึงข้อมูลล่าสุดผ่านเซิร์ฟเวอร์สำเร็จ! (พบ ${sData.total_jay_pending} งานค้าง)`);
-            return;
+            renderExcelTable();
+            fallbackSuccess = true;
+            showSyncSuccess('อัปเดตข้อมูลจากชีตสำเร็จ!', appData.all_pending_jobs ? appData.all_pending_jobs.length : '');
           }
         } catch(e) {}
 
-        showToast(`❌ ซิงค์ข้อมูลไม่สำเร็จ: ${err.message}`);
+        if (!fallbackSuccess) {
+          if (isAutoOnLoad) {
+            showSyncWarning('เปิดใช้งานด้วยข้อมูลล่าสุดในเครื่อง');
+          } else {
+            showSyncWarning('ไม่สามารถเชื่อมต่อชีตได้');
+            showToast('⚠️ ไม่สามารถเชื่อมต่อ Google Sheet ได้ ใช้ข้อมูลล่าสุดในเครื่องแทน');
+          }
+        }
       } finally {
-        if (btnText) btnText.textContent = originalText;
-        icon.classList.remove('animate-spin');
-        btn.disabled = false;
+        if (btn && icon) {
+          icon.classList.remove('animate-spin');
+          btn.disabled = false;
+        }
       }
     }
 
+    function triggerSync() {
+      openSyncModal('กำลังอัปเดตข้อมูลจากชีต...', 'ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมสดจาก Google Sheet กรุณารอสักครู่');
+      performSheetSync(false);
+    }
 
     // EXCEL (.XLSX) EXPORT FUNCTION
     function exportToExcel() {
@@ -1388,10 +2485,14 @@
         return;
       }
 
-      const jobs = appData.all_pending_jobs;
+      const jobs = getJobsForSelectedTechnician();
+      if (jobs.length === 0) {
+        showToast(`❌ ไม่พบข้อมูลงานค้างของ ${selectedTechnician} สำหรับส่งออก`);
+        return;
+      }
+      const wb = XLSX.utils.book_new();
 
-      // 1. Prepare Main Sheet Data (งานค้างทั้งหมด)
-      const mainRows = jobs.map((j, idx) => ({
+      const formatJobRow = (j, idx) => ({
         'ลำดับ': idx + 1,
         'เลขแจ้งซ่อม (No. ที่)': j.no || '',
         'JOB NO.': j.job_no || '',
@@ -1411,13 +2512,9 @@
         'สถานะหน้างาน': j.custom_site_status || j.site_status || '',
         'ช่องทางติดต่อ ผรม.': j.custom_contact || '',
         'บันทึกเพิ่มเติม / หมายเหตุ': j.custom_notes || j.remark || ''
-      }));
+      });
 
-      const wb = XLSX.utils.book_new();
-
-      // Main Sheet
-      const wsMain = XLSX.utils.json_to_sheet(mainRows);
-      wsMain['!cols'] = [
+      const stdCols = [
         { wch: 8 },  // ลำดับ
         { wch: 18 }, // เลขแจ้งซ่อม
         { wch: 16 }, // JOB NO.
@@ -1438,40 +2535,113 @@
         { wch: 20 }, // ช่องทางติดต่อ
         { wch: 35 }  // บันทึกเพิ่มเติม
       ];
+
+      // 1. Sheet: งานซ่อมคงค้างทั้งหมด
+      const mainRows = jobs.map(formatJobRow);
+      const wsMain = XLSX.utils.json_to_sheet(mainRows);
+      wsMain['!cols'] = stdCols;
       XLSX.utils.book_append_sheet(wb, wsMain, "งานซ่อมคงค้างทั้งหมด");
 
-      // Optional: If a specific province is currently filtered, add a dedicated sheet for it
-      if (selectedProvince) {
+      // Optional Dedicated Sheet for current filter
+      if (selectedBranch !== 'all') {
+        const bJobs = jobs.filter(j => j.branch === selectedBranch);
+        if (bJobs.length > 0) {
+          const wsB = XLSX.utils.json_to_sheet(bJobs.map(formatJobRow));
+          wsB['!cols'] = stdCols;
+          const sTitle = `เฉพาะสาขา_${selectedBranch}`.slice(0, 31);
+          XLSX.utils.book_append_sheet(wb, wsB, sTitle);
+        }
+      } else if (selectedProvince) {
         const provJobs = jobs.filter(j => j.province === selectedProvince);
         if (provJobs.length > 0) {
-          const provRows = provJobs.map((j, idx) => ({
-            'ลำดับ': idx + 1,
-            'เลขแจ้งซ่อม (No. ที่)': j.no || '',
-            'JOB NO.': j.job_no || '',
-            'วันที่รับเอกสาร': j.date || '',
-            'สาขา': j.branch || '',
-            'ประเภทงาน (คอลัมน์ D)': j.category || '',
-            'ลักษณะงาน': j.nature || '',
-            'รายละเอียดงาน / ปัญหา': j.desc || '',
-            'สถานะ (STATUS)': j.status || '',
-            'ผู้รับผิดชอบ': j.custom_responsible || j.responsible || 'ช่างเจ',
-            'ชื่อ ผรม. ที่เข้าดำเนินการ': j.custom_contractor || j.operator || '',
-            'สถานะหน้างาน': j.custom_site_status || '',
-            'ช่องทางติดต่อ': j.custom_contact || '',
-            'บันทึกเพิ่มเติม': j.custom_notes || ''
-          }));
-          const wsSelProv = XLSX.utils.json_to_sheet(provRows);
-          wsSelProv['!cols'] = [
-            { wch: 8 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 22 },
-            { wch: 28 }, { wch: 32 }, { wch: 45 }, { wch: 18 }, { wch: 18 },
-            { wch: 25 }, { wch: 22 }, { wch: 20 }, { wch: 35 }
-          ];
-          const sheetTitle = `เฉพาะจังหวัด_${selectedProvince}`.slice(0, 31);
-          XLSX.utils.book_append_sheet(wb, wsSelProv, sheetTitle);
+          const wsSelProv = XLSX.utils.json_to_sheet(provJobs.map(formatJobRow));
+          wsSelProv['!cols'] = stdCols;
+          const sTitle = `เฉพาะจังหวัด_${selectedProvince}`.slice(0, 31);
+          XLSX.utils.book_append_sheet(wb, wsSelProv, sTitle);
+        }
+      } else if (selectedZone !== 'all') {
+        const zJobs = jobs.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+        if (zJobs.length > 0) {
+          const wsZ = XLSX.utils.json_to_sheet(zJobs.map(formatJobRow));
+          wsZ['!cols'] = stdCols;
+          const sTitle = `เฉพาะเขต_${selectedZone}`.slice(0, 31);
+          XLSX.utils.book_append_sheet(wb, wsZ, sTitle);
         }
       }
 
-      // 2. Summary by Province Sheet
+      // 2. Summary by Zone Sheet (สรุปรายเขต)
+      const zoneMap = {};
+      jobs.forEach(j => {
+        const z = (j.zone || '').trim() || 'ไม่ระบุเขต';
+        if (!zoneMap[z]) {
+          zoneMap[z] = { count: 0, branches: new Set(), provinces: new Set(), boq: 0, action: 0, quote: 0 };
+        }
+        zoneMap[z].count++;
+        if (j.branch) zoneMap[z].branches.add(j.branch);
+        if (j.province) zoneMap[z].provinces.add(j.province);
+        if (j.status === 'รอประเมินBOQ') zoneMap[z].boq++;
+        else if (j.status === 'รอดำเนินการ') zoneMap[z].action++;
+        else if (j.status === 'รอใบเสนอราคา') zoneMap[z].quote++;
+      });
+
+      const zoneSummaryRows = Object.entries(zoneMap)
+        .sort((a, b) => {
+          if (a[0] === 'ไม่ระบุเขต') return 1;
+          if (b[0] === 'ไม่ระบุเขต') return -1;
+          return a[0].localeCompare(b[0], 'th', { numeric: true });
+        })
+        .map(([zName, zInfo], idx) => ({
+          'ลำดับ': idx + 1,
+          'เขต': zName,
+          'จำนวนงานค้าง (งาน)': zInfo.count,
+          'จำนวนสาขา': zInfo.branches.size,
+          'สาขาในพื้นที่': Array.from(zInfo.branches).sort().join(', '),
+          'รอประเมินBOQ': zInfo.boq,
+          'รอดำเนินการ': zInfo.action,
+          'รอใบเสนอราคา': zInfo.quote
+        }));
+
+      const wsZone = XLSX.utils.json_to_sheet(zoneSummaryRows);
+      wsZone['!cols'] = [
+        { wch: 8 }, { wch: 15 }, { wch: 20 }, { wch: 14 }, { wch: 45 },
+        { wch: 16 }, { wch: 16 }, { wch: 16 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsZone, "สรุปรายเขต");
+
+      // 3. Summary by Branch Sheet (สรุปรายสาขา)
+      const branchMap = {};
+      jobs.forEach(j => {
+        const b = j.branch || 'ไม่ระบุ';
+        if (!branchMap[b]) {
+          branchMap[b] = { count: 0, province: j.province || '', zone: j.zone || '', boq: 0, action: 0, quote: 0 };
+        }
+        branchMap[b].count++;
+        if (j.status === 'รอประเมินBOQ') branchMap[b].boq++;
+        else if (j.status === 'รอดำเนินการ') branchMap[b].action++;
+        else if (j.status === 'รอใบเสนอราคา') branchMap[b].quote++;
+      });
+
+      const branchSummaryRows = Object.entries(branchMap)
+        .sort((a, b) => b[1].count - a[1].count)
+        .map(([bName, bInfo], idx) => ({
+          'ลำดับ': idx + 1,
+          'สาขา': bName,
+          'จังหวัด': bInfo.province,
+          'เขต': bInfo.zone,
+          'จำนวนงานค้าง (งาน)': bInfo.count,
+          'รอประเมินBOQ': bInfo.boq,
+          'รอดำเนินการ': bInfo.action,
+          'รอใบเสนอราคา': bInfo.quote
+        }));
+
+      const wsBranch = XLSX.utils.json_to_sheet(branchSummaryRows);
+      wsBranch['!cols'] = [
+        { wch: 8 }, { wch: 22 }, { wch: 18 }, { wch: 12 }, { wch: 20 },
+        { wch: 16 }, { wch: 16 }, { wch: 16 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsBranch, "สรุปรายสาขา");
+
+      // 4. Summary by Province Sheet (สรุปรายจังหวัด)
       const provMap = {};
       jobs.forEach(j => {
         const p = j.province || 'ไม่ระบุ';
@@ -1491,7 +2661,7 @@
           'ลำดับ': idx + 1,
           'จังหวัด': pName,
           'จำนวนงานค้าง (งาน)': pInfo.count,
-          'สาขาในพื้นที่': Array.from(pInfo.branches).join(', '),
+          'สาขาในพื้นที่': Array.from(pInfo.branches).sort().join(', '),
           'รอประเมินBOQ': pInfo.boq,
           'รอดำเนินการ': pInfo.action,
           'รอใบเสนอราคา': pInfo.quote
@@ -1504,7 +2674,7 @@
       ];
       XLSX.utils.book_append_sheet(wb, wsProv, "สรุปรายจังหวัด");
 
-      // 3. Summary by Category (Column D) Sheet
+      // 5. Summary by Category (Column D) Sheet
       const catMap = {};
       jobs.forEach(j => {
         const c = j.category || 'ไม่ระบุประเภทงาน';
@@ -1527,10 +2697,101 @@
       const now = new Date();
       const pad = n => String(n).padStart(2, '0');
       const dStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-      const fileName = `สรุปงานซ่อมคงค้าง_ช่างเจ_GBH_${dStr}.xlsx`;
+      const techLabel = (selectedTechnician === 'all' ? 'ช่างทั้งหมด' : selectedTechnician);
+      const fileName = `สรุปงานซ่อมคงค้าง_${techLabel}_GBH_${dStr}.xlsx`;
 
       XLSX.writeFile(wb, fileName);
       showToast(`📊 ส่งออกไฟล์ Excel สำเร็จ! (${fileName})`);
+    }
+
+    // IMPORT LOCAL EXCEL OR CSV FILE DIRECTLY IN BROWSER
+    function handleLocalFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const fileName = file.name;
+      const isXlsx = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+      showToast(`⏳ กำลังอ่านข้อมูลจาก ${fileName}...`);
+
+      const reader = new FileReader();
+
+      if (isXlsx) {
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const csvText = XLSX.utils.sheet_to_csv(worksheet);
+
+            const newData = parseAndProcessSheetCSV(csvText);
+            newData.sync_message = `นำเข้าจากไฟล์ในเครื่อง: ${fileName}`;
+            appData = newData;
+            mergeCustomEdits();
+            populateTechnicianOptions();
+            populateZoneOptions();
+            populateBranchOptions();
+            renderBranchPills();
+            updateActiveBanner();
+            renderKPIs();
+            renderThailandMap();
+            renderTopProvincesBadges();
+            renderTaskList();
+
+            try {
+              localStorage.setItem('GBH_LIVE_DASHBOARD_DATA', JSON.stringify(appData));
+            } catch(err) {}
+
+            const timeStr = new Date().toLocaleTimeString('th-TH');
+            showToast(`✅ นำเข้าข้อมูลจาก ${fileName} สำเร็จ! พบ ${newData.total_jay_pending} งานค้าง (${timeStr})`);
+
+            const timeHeader = document.getElementById('headerLastUpdated');
+            if (timeHeader) {
+              timeHeader.textContent = `ไฟล์ในเครื่อง (${timeStr})`;
+              timeHeader.classList.add('text-amber-300', 'font-bold');
+              setTimeout(() => timeHeader.classList.remove('text-amber-300'), 3000);
+            }
+          } catch(err) {
+            console.error('Error parsing local excel:', err);
+            showToast(`❌ เกิดข้อผิดพลาดในการอ่านไฟล์ Excel: ${err.message}`);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        // CSV
+        reader.onload = function(e) {
+          try {
+            const csvText = e.target.result;
+            const newData = parseAndProcessSheetCSV(csvText);
+            newData.sync_message = `นำเข้าจากไฟล์ในเครื่อง: ${fileName}`;
+            appData = newData;
+            mergeCustomEdits();
+            populateTechnicianOptions();
+            populateZoneOptions();
+            populateBranchOptions();
+            renderBranchPills();
+            updateActiveBanner();
+            renderKPIs();
+            renderThailandMap();
+            renderTopProvincesBadges();
+            renderTaskList();
+
+            try {
+              localStorage.setItem('GBH_LIVE_DASHBOARD_DATA', JSON.stringify(appData));
+            } catch(err) {}
+
+            const timeStr = new Date().toLocaleTimeString('th-TH');
+            showToast(`✅ นำเข้าข้อมูลจาก ${fileName} สำเร็จ! พบ ${newData.total_jay_pending} งานค้าง (${timeStr})`);
+          } catch(err) {
+            console.error('Error parsing local CSV:', err);
+            showToast(`❌ เกิดข้อผิดพลาดในการอ่านไฟล์ CSV: ${err.message}`);
+          }
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      // Reset picker so same file can be re-uploaded if modified
+      event.target.value = '';
     }
 
     function exportData() {
@@ -1556,6 +2817,515 @@
       mapScale = 1.0;
       document.getElementById('thailandSvg').style.transform = `scale(1)`;
     }
+  
+    // =========================================================================
+    // EXCEL TABLE VIEW & TAB SWITCHING LOGIC
+    // =========================================================================
+
+    let currentActiveTab = 'dashboard'; // 'dashboard' or 'excelTable'
+    let currentExcelSort = 'date';       // default sort by date
+    let currentExcelSortAsc = false;     // default descending: newest to oldest!
+
+    const THAI_MONTH_SCORE = {
+      'ม.ค.': 1, 'ก.พ.': 2, 'มี.ค.': 3, 'เม.ย.': 4, 'พ.ค.': 5, 'มิ.ย.': 6,
+      'ก.ค.': 7, 'ส.ค.': 8, 'ก.ย.': 9, 'ต.ค.': 10, 'พ.ย.': 11, 'ธ.ค.': 12
+    };
+
+    function parseJobDateScore(j) {
+      const dStr = (j.date || '').trim();
+      const noNum = j.no_num || 0;
+      const parts = dStr.split(/\s+/);
+      if (parts.length >= 3 && THAI_MONTH_SCORE[parts[1]]) {
+        try {
+          const day = parseInt(parts[0], 10) || 1;
+          const m = THAI_MONTH_SCORE[parts[1]] || 1;
+          let yr = parseInt(parts[2], 10) || 0;
+          if (yr > 2500) yr -= 543;
+          else if (yr >= 50) yr = 2500 + yr - 543;
+          else if (yr < 50) yr = 2000 + yr;
+          if (yr > 2026) yr = 2026; // Guard against sheet typos
+          return (yr * 10000 + m * 100 + day) * 100000 + noNum;
+        } catch(e) {}
+      }
+      return noNum;
+    }
+
+    
+    // =========================================================================
+    // RESPONSIBLE TECHNICIAN EDITING HELPERS
+    // =========================================================================
+    // รายชื่อช่างทีมงานหลักในระบบ (ตามความต้องการของผู้ใช้: ช่างเจ, ช่างเมย์, ช่างหนุ่ม, ช่างตุ้ย)
+    const TEAM_RESPONSIBLE_LIST = [
+      'ช่างเจ',
+      'ช่างเมย์',
+      'ช่างหนุ่ม',
+      'ช่างตุ้ย'
+    ];
+
+    function buildResponsibleOptions(currentValue) {
+      const cur = (currentValue || 'งานระบบ').trim();
+      let html = '';
+
+      // 1. งานระบบ (สำหรับงานที่ยังไม่ได้ระบุช่าง หรือต้องการปรับคืนเป็นงานระบบ)
+      const isSys = (cur === 'งานระบบ' || cur === 'ไม่ระบุ' || !cur);
+      html += `<option value="งานระบบ" ${isSys ? 'selected' : ''}>⚙️ งานระบบ (ยังไม่ระบุช่าง)</option>`;
+
+      // 2. 4 ช่างทีมงานหลัก: ช่างเจ, ช่างเมย์, ช่างหนุ่ม, ช่างตุ้ย
+      let isFound = false;
+      TEAM_RESPONSIBLE_LIST.forEach(t => {
+        const selected = (t === cur) ? 'selected' : '';
+        if (selected) isFound = true;
+        html += `<option value="${t}" ${selected}>👤 ${t}</option>`;
+      });
+
+      // 3. กรณีมีชื่อระบุพิเศษเดิม (ไม่ใช่ 4 คนนี้ และไม่ใช่งานระบบ)
+      if (!isFound && !isSys && cur) {
+        html += `<option value="${cur}" selected>👤 ${cur}</option>`;
+      }
+
+      // 4. ระบุชื่ออื่น
+      html += `<option value="__custom__">➕ ระบุชื่ออื่น...</option>`;
+      return html;
+    }
+
+    function renderResponsibleBadge(respName) {
+      const r = (respName || 'งานระบบ').trim();
+      if (r === 'งานระบบ' || r === 'ไม่ระบุ' || !r) {
+        return `<span class="bg-slate-100 text-slate-700 border border-slate-300 font-medium px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="text-[11px]">⚙️</span> <span>งานระบบ</span>
+        </span>`;
+      }
+      if (r === 'ช่างเจ') {
+        return `<span class="bg-sky-50 text-sky-800 border border-sky-300 font-bold px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="text-[11px]">👤</span> <span>ช่างเจ</span>
+        </span>`;
+      }
+      if (r === 'ช่างเมย์') {
+        return `<span class="bg-pink-50 text-pink-800 border border-pink-300 font-bold px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="text-[11px]">👤</span> <span>ช่างเมย์</span>
+        </span>`;
+      }
+      if (r === 'ช่างหนุ่ม') {
+        return `<span class="bg-indigo-50 text-indigo-800 border border-indigo-300 font-bold px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="text-[11px]">👤</span> <span>ช่างหนุ่ม</span>
+        </span>`;
+      }
+      if (r === 'ช่างตุ้ย') {
+        return `<span class="bg-amber-50 text-amber-800 border border-amber-300 font-bold px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+          <span class="text-[11px]">👤</span> <span>ช่างตุ้ย</span>
+        </span>`;
+      }
+      return `<span class="bg-teal-50 text-teal-800 border border-teal-300 font-bold px-2.5 py-1 rounded-lg text-xs inline-flex items-center gap-1.5 shadow-2xs">
+        <span class="text-[11px]">👤</span> <span>${r}</span>
+      </span>`;
+    }
+
+    async function updateJobResponsible(jobId, newResp) {
+      if (!appData || !appData.all_pending_jobs) return;
+      const job = appData.all_pending_jobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      if (newResp === '__custom__') {
+        const customName = prompt(`ระบุชื่อผู้รับผิดชอบสำหรับใบแจ้งซ่อม No. ${job.no || ''}:`, job.custom_responsible || job.responsible || 'งานระบบ');
+        if (!customName || !customName.trim()) {
+          renderExcelTable();
+          return;
+        }
+        newResp = customName.trim();
+      }
+
+      // Update in memory
+      job.custom_responsible = newResp;
+
+      // Update customEdits
+      if (!customEdits[jobId]) customEdits[jobId] = {};
+      customEdits[jobId].custom_responsible = newResp;
+      customEdits[jobId].updated_at = new Date().toISOString();
+
+      try {
+        localStorage.setItem('GBH_JAY_JOB_EDITS', JSON.stringify(customEdits));
+      } catch(e) {}
+
+      // Try sending to local Python server if available
+      try {
+        fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId, editData: customEdits[jobId] })
+        });
+      } catch(err) {}
+
+      showToast(`✅ บันทึกผู้รับผิดชอบ No. ${job.no} เป็น "${newResp}" เรียบร้อยแล้ว`);
+      renderKPIs();
+      renderTaskList();
+      renderExcelTable();
+    }
+
+    function switchMainTab(tabName) {
+      currentActiveTab = tabName;
+      const btnDash = document.getElementById('tabBtnDashboard');
+      const btnExcel = document.getElementById('tabBtnExcelTable');
+      const contentDash = document.getElementById('tabContentDashboard');
+      const contentExcel = document.getElementById('tabContentExcelTable');
+
+      if (tabName === 'dashboard') {
+        btnDash.className = 'tab-nav-btn active px-4 py-2 text-xs sm:text-sm font-bold rounded-t-xl transition flex items-center gap-2 border-b-2 border-sky-600 text-sky-800 bg-sky-50/80 shadow-xs';
+        btnExcel.className = 'tab-nav-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition flex items-center gap-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        contentDash.classList.remove('hidden');
+        contentDash.classList.add('grid');
+        contentExcel.classList.add('hidden');
+        contentExcel.classList.remove('flex');
+      } else {
+        btnExcel.className = 'tab-nav-btn active px-4 py-2 text-xs sm:text-sm font-bold rounded-t-xl transition flex items-center gap-2 border-b-2 border-emerald-600 text-emerald-800 bg-emerald-50/80 shadow-xs';
+        btnDash.className = 'tab-nav-btn px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-xl transition flex items-center gap-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100';
+        contentDash.classList.add('hidden');
+        contentDash.classList.remove('grid');
+        contentExcel.classList.remove('hidden');
+        contentExcel.classList.add('flex');
+        renderExcelTable();
+      }
+    }
+
+    function sortExcelBy(colKey) {
+      if (currentExcelSort === colKey) {
+        currentExcelSortAsc = !currentExcelSortAsc;
+      } else {
+        currentExcelSort = colKey;
+        // If sorting by date, default descending (newest first). Otherwise ascending.
+        currentExcelSortAsc = (colKey === 'date') ? false : true;
+      }
+      updateExcelSortIcons();
+      renderExcelTable();
+    }
+
+    let tableQuickEditActive = false; // false = protected badge view, true = interactive dropdowns
+
+    function toggleSheetTechDropdown() {
+      const wrapper = document.getElementById('sheetTechDropdownWrapper');
+      const icon = document.getElementById('sheetTechLockIcon');
+      const label = document.getElementById('sheetTechLockLabel');
+      if (!wrapper) return;
+      const isHidden = wrapper.classList.contains('hidden');
+      if (isHidden) {
+        wrapper.classList.remove('hidden');
+        wrapper.classList.add('flex');
+        if (icon) icon.textContent = '🔓';
+        if (label) label.textContent = 'ซ่อน';
+        const sel = document.getElementById('technicianSelectHeader');
+        if (sel) sel.focus();
+      } else {
+        wrapper.classList.add('hidden');
+        wrapper.classList.remove('flex');
+        if (icon) icon.textContent = '🔒';
+        if (label) label.textContent = 'เปลี่ยน';
+      }
+    }
+
+    function toggleTab1TechSelect() {
+      const badgeWrap = document.getElementById('tab1TechBadgeWrapper');
+      const sel = document.getElementById('technicianSelect');
+      if (!badgeWrap || !sel) return;
+      const isSelHidden = sel.classList.contains('hidden');
+      if (isSelHidden) {
+        sel.classList.remove('hidden');
+        badgeWrap.classList.add('hidden');
+        sel.focus();
+      } else {
+        sel.classList.add('hidden');
+        badgeWrap.classList.remove('hidden');
+      }
+    }
+
+    function toggleTableQuickEdit() {
+      tableQuickEditActive = !tableQuickEditActive;
+      const icon = document.getElementById('tableQuickEditIcon');
+      const text = document.getElementById('tableQuickEditText');
+      const btn = document.getElementById('btnTableQuickEdit');
+      if (tableQuickEditActive) {
+        if (icon) icon.textContent = '🔓';
+        if (text) text.textContent = 'โหมดแก้ไขด่วน (เปิดอยู่)';
+        if (btn) {
+          btn.className = 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5 transition active:scale-95 shadow-2xs';
+        }
+        showToast('🔓 ปลดล็อกโหมดแก้ไขด่วน: สามารถเลือกผู้รับผิดชอบในตารางได้ทันที');
+      } else {
+        if (icon) icon.textContent = '🔒';
+        if (text) text.textContent = 'ล็อกตาราง (ดูอย่างเดียว)';
+        if (btn) {
+          btn.className = 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-2xs';
+        }
+        showToast('🔒 ล็อกตารางเป็นโหมดดูอย่างเดียว ป้องกันการเปลี่ยนเล่น');
+      }
+      renderExcelTable();
+    }
+
+    function toggleExcelDateSort() {
+      currentExcelSort = 'date';
+      currentExcelSortAsc = !currentExcelSortAsc;
+      updateExcelSortIcons();
+      renderExcelTable();
+    }
+
+    function updateExcelSortIcons() {
+      const cols = ['date', 'no', 'branch', 'province', 'category', 'status', 'responsible'];
+      cols.forEach(c => {
+        const iconEl = document.getElementById(`sortIcon-${c}`);
+        if (!iconEl) return;
+        if (currentExcelSort === c) {
+          iconEl.textContent = currentExcelSortAsc ? '▲' : '▼';
+          iconEl.className = 'text-amber-300 font-bold';
+        } else {
+          iconEl.textContent = '⇅';
+          iconEl.className = 'text-slate-400';
+        }
+      });
+
+      const dirIcon = document.getElementById('sortDirectionIcon');
+      const dirText = document.getElementById('sortDirectionText');
+      if (currentExcelSort === 'date') {
+        if (!currentExcelSortAsc) {
+          if (dirIcon) dirIcon.textContent = '⬇️';
+          if (dirText) dirText.textContent = 'ล่าสุด ➔ เก่าสุด';
+        } else {
+          if (dirIcon) dirIcon.textContent = '⬆️';
+          if (dirText) dirText.textContent = 'เก่าสุด ➔ ล่าสุด';
+        }
+      } else {
+        if (dirIcon) dirIcon.textContent = '🔀';
+        if (dirText) dirText.textContent = `เรียงตาม${currentExcelSort} (${currentExcelSortAsc ? 'ก-ฮ' : 'ฮ-ก'})`;
+      }
+    }
+
+    function getExcelTableJobs() {
+      let jobs = getJobsForSelectedTechnician();
+      
+      // Inherit active zone, province, branch, status filter if any
+      if (selectedZone && selectedZone !== 'all') {
+        jobs = jobs.filter(j => ((j.zone || '').trim() || 'ไม่ระบุเขต') === selectedZone);
+      }
+      if (selectedProvince) {
+        jobs = jobs.filter(j => j.province === selectedProvince);
+      }
+      if (selectedBranch && selectedBranch !== 'all') {
+        jobs = jobs.filter(j => j.branch === selectedBranch);
+      }
+      if (currentStatusFilter !== 'all') {
+        jobs = jobs.filter(j => j.status === currentStatusFilter);
+      }
+
+      // Filter by search input
+      const searchInput = document.getElementById('excelTableSearch');
+      const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+      if (q) {
+        jobs = jobs.filter(j =>
+          (j.no && String(j.no).toLowerCase().includes(q)) ||
+          (j.job_no && String(j.job_no).toLowerCase().includes(q)) ||
+          (j.branch && String(j.branch).toLowerCase().includes(q)) ||
+          (j.province && String(j.province).toLowerCase().includes(q)) ||
+          (j.zone && String(j.zone).toLowerCase().includes(q)) ||
+          (j.category && String(j.category).toLowerCase().includes(q)) ||
+          (j.nature && String(j.nature).toLowerCase().includes(q)) ||
+          (j.desc && String(j.desc).toLowerCase().includes(q)) ||
+          (j.responsible && String(j.responsible).toLowerCase().includes(q)) ||
+          (j.custom_responsible && String(j.custom_responsible).toLowerCase().includes(q)) ||
+          (j.custom_contractor && String(j.custom_contractor).toLowerCase().includes(q)) ||
+          (j.custom_site_status && String(j.custom_site_status).toLowerCase().includes(q)) ||
+          (j.custom_notes && String(j.custom_notes).toLowerCase().includes(q))
+        );
+      }
+
+      // Sort jobs
+      jobs.sort((a, b) => {
+        let diff = 0;
+        if (currentExcelSort === 'date') {
+          diff = parseJobDateScore(b) - parseJobDateScore(a);
+          return currentExcelSortAsc ? -diff : diff;
+        } else if (currentExcelSort === 'no') {
+          diff = (a.no_num || 0) - (b.no_num || 0);
+        } else if (currentExcelSort === 'branch') {
+          diff = (a.branch || '').localeCompare(b.branch || '', 'th');
+        } else if (currentExcelSort === 'province') {
+          diff = (a.province || '').localeCompare(b.province || '', 'th');
+        } else if (currentExcelSort === 'category') {
+          diff = (a.category || '').localeCompare(b.category || '', 'th');
+        } else if (currentExcelSort === 'status') {
+          diff = (a.status || '').localeCompare(b.status || '', 'th');
+        } else if (currentExcelSort === 'responsible') {
+          const rA = a.custom_responsible || a.responsible || '';
+          const rB = b.custom_responsible || b.responsible || '';
+          diff = rA.localeCompare(rB, 'th');
+        }
+
+        if (diff === 0) {
+          // secondary tie-breaker: newest ticket number first
+          return (b.no_num || 0) - (a.no_num || 0);
+        }
+        return currentExcelSortAsc ? diff : -diff;
+      });
+
+      return jobs;
+    }
+
+    function renderExcelTable() {
+      const tbody = document.getElementById('excelTableTbody');
+      if (!tbody) return;
+
+      const jobs = getExcelTableJobs();
+
+      // Update badge counts
+      const badge = document.getElementById('tabExcelCountBadge');
+      if (badge) badge.textContent = `${jobs.length} งาน`;
+
+      const countText = document.getElementById('excelTableCountText');
+      if (countText) countText.textContent = `แสดง ${jobs.length} งาน`;
+
+      const techLabel = (selectedTechnician === 'all' ? 'ช่างทั้งหมด' : selectedTechnician);
+      const techBadge = document.getElementById('tabTechBadge');
+      if (techBadge) techBadge.textContent = techLabel;
+
+      if (jobs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12" class="p-12 text-center text-slate-400">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <span class="text-3xl">🔍</span>
+                <span class="text-sm font-semibold text-slate-700">ไม่พบข้อมูลงานซ่อมตามเงื่อนไขที่เลือก</span>
+                <span class="text-xs text-slate-400">ลองล้างคำค้นหา หรือเลือกตัวกรองช่าง/จังหวัดอื่น</span>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      jobs.forEach((j, idx) => {
+        const hasContractor = Boolean(j.custom_contractor && j.custom_contractor.trim());
+        const hasSiteStatus = Boolean(j.custom_site_status && j.custom_site_status.trim());
+        const hasNotes = Boolean(j.custom_notes && j.custom_notes.trim());
+        const isHighlight = hasContractor || hasSiteStatus || hasNotes;
+
+        // Status style badge
+        let statClass = 'bg-slate-100 text-slate-700 border-slate-200';
+        if (j.status === 'รอประเมินBOQ') statClass = 'bg-blue-50 text-blue-700 border-blue-200 font-bold';
+        else if (j.status === 'รอดำเนินการ') statClass = 'bg-amber-50 text-amber-700 border-amber-200 font-bold';
+        else if (j.status === 'รอใบเสนอราคา') statClass = 'bg-purple-50 text-purple-700 border-purple-200 font-bold';
+
+        const curResp = (j.custom_responsible || j.responsible || 'งานระบบ').trim();
+        const respName = curResp;
+        const contractorName = j.custom_contractor || '-';
+        const siteStatusName = j.custom_site_status || '-';
+        const notesText = j.custom_notes || j.remark || '-';
+
+        html += `
+          <tr ondblclick="openModalById('${j.id}')" 
+              class="hover:bg-sky-100/70 cursor-pointer transition border-b border-slate-200/80 ${isHighlight ? 'bg-emerald-50/40' : 'even:bg-slate-50/40'}"
+              title="ดับเบิ้ลคลิกแถวนี้เพื่อแก้ไขข้อมูล No. ${j.no || ''} (${j.branch || ''})">
+            <!-- 1. Index -->
+            <td class="px-3 py-2.5 text-center text-slate-400 font-medium select-none">${idx + 1}</td>
+            
+            <!-- 2. Date -->
+            <td class="px-3 py-2.5 font-bold text-slate-800 whitespace-nowrap">
+              ${j.date || '<span class="text-slate-300">-</span>'}
+            </td>
+
+            <!-- 3. Ticket No -->
+            <td class="px-3 py-2.5 font-bold text-sky-700 whitespace-nowrap">
+              <span>${j.no || '-'}</span>
+              ${j.job_no ? `<span class="block text-[10px] text-slate-400 font-normal">JOB: ${j.job_no}</span>` : ''}
+            </td>
+
+            <!-- 4. Branch -->
+            <td class="px-3 py-2.5 font-semibold text-slate-800 whitespace-nowrap">
+              <span>${j.branch || '-'}</span>
+              ${j.zone ? `<span class="block text-[10px] text-indigo-600 font-normal">${j.zone}</span>` : ''}
+            </td>
+
+            <!-- 5. Province -->
+            <td class="px-3 py-2.5 text-slate-700 whitespace-nowrap">
+              <span>${j.province || '-'}</span>
+            </td>
+
+            <!-- 6. Category (Col D) -->
+            <td class="px-3 py-2.5 text-slate-800 font-medium whitespace-nowrap">
+              <span class="bg-sky-50 text-sky-800 border border-sky-200/80 px-2 py-0.5 rounded-md text-[11px] font-semibold">
+                ${j.category || 'ไม่ระบุ'}
+              </span>
+            </td>
+
+            <!-- 7. Nature & Desc -->
+            <td class="px-3 py-2.5 max-w-xs text-slate-600" title="${(j.desc || j.nature || '').replace(/"/g, '&quot;')}">
+              ${j.nature ? `<div class="font-semibold text-slate-800 truncate">${j.nature}</div>` : ''}
+              ${j.desc ? `<div class="text-[11px] text-slate-500 truncate mt-0.5">${j.desc}</div>` : ''}
+            </td>
+
+            <!-- 8. Status -->
+            <td class="px-3 py-2.5 whitespace-nowrap">
+              <span class="text-[11px] px-2 py-0.5 rounded-full border ${statClass}">
+                ${j.status || '-'}
+              </span>
+            </td>
+
+            <!-- 9. Responsible (Protected Badge by default / Dropdown in Quick Edit Mode) -->
+            <td class="px-2.5 py-2 whitespace-nowrap">
+              ${tableQuickEditActive
+                ? `<select onchange="updateJobResponsible('${j.id}', this.value)" ondblclick="event.stopPropagation()"
+                    class="px-2 py-1 rounded-lg text-xs font-bold border transition shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500 ${
+                      curResp === 'งานระบบ' 
+                        ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-white' 
+                        : (curResp === 'ช่างเจ' ? 'bg-sky-50 text-sky-800 border-sky-300 font-bold' : 'bg-indigo-50 text-indigo-800 border-indigo-300 font-bold')
+                    }" title="คลิกเพื่อเลือกหรือเปลี่ยนผู้รับผิดชอบ">
+                    ${buildResponsibleOptions(curResp)}
+                  </select>`
+                : `${renderResponsibleBadge(curResp)}`
+              }
+            </td>
+
+            <!-- 10. Contractor -->
+            <td class="px-3 py-2.5 whitespace-nowrap">
+              ${hasContractor
+                ? `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded-md text-[11px] flex items-center gap-1 w-max">
+                     <span>👷</span> <span>${contractorName}</span>
+                   </span>`
+                : `<span class="text-slate-300">-</span>`}
+            </td>
+
+            <!-- 11. Site Status -->
+            <td class="px-3 py-2.5 whitespace-nowrap">
+              ${hasSiteStatus
+                ? `<span class="bg-amber-100 text-amber-900 border border-amber-300 font-semibold px-2 py-0.5 rounded-md text-[11px] flex items-center gap-1 w-max">
+                     <span>📍</span> <span>${siteStatusName}</span>
+                   </span>`
+                : `<span class="text-slate-300">-</span>`}
+            </td>
+
+            <!-- 12. Notes -->
+            <td class="px-3 py-2.5 max-w-[180px] truncate text-slate-600" title="${notesText.replace(/"/g, '&quot;')}">
+              ${hasNotes
+                ? `<span class="text-emerald-700 font-medium">${notesText}</span>`
+                : `<span class="text-slate-400 text-[11px]">${notesText}</span>`}
+            </td>
+
+
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function filterExcelTable(query) {
+      renderExcelTable();
+    }
+
+    function openModalById(jobId) {
+      if (!appData || !appData.all_pending_jobs) return;
+      const job = appData.all_pending_jobs.find(j => j.id === jobId);
+      if (job) {
+        openModal(job);
+      }
+    }
+
   </script>
 </body>
 </html>
