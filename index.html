@@ -1056,7 +1056,13 @@
         return appData.all_pending_jobs.filter(j => {
           const sheetResp = (j.responsible || '').trim();
           const customResp = (j.custom_responsible || '').trim();
-          return sheetResp === 'งานระบบ' || customResp === 'งานระบบ';
+          if (customResp && customResp !== 'งานระบบ' && customResp !== 'งานระบบ (ยังไม่ระบุช่าง)' && customResp !== 'ไม่ระบุ') {
+            return false;
+          }
+          if (sheetResp && sheetResp !== 'งานระบบ' && sheetResp !== 'ไม่ระบุ' && sheetResp !== '-') {
+            return false;
+          }
+          return true;
         });
       }
       if (selectedTechnician === 'ไม่ระบุ') {
@@ -2540,7 +2546,13 @@
       }
     }
 
-    function processGasSheetData(rows, lastSynced) {
+        function parseNumForSort(s) {
+      if (!s) return 99999999;
+      const m = String(s).match(/\d+/);
+      return m ? parseInt(m[0], 10) : 99999999;
+    }
+
+function processGasSheetData(rows, lastSynced) {
       const allJobs = [];
       const allPendingJobs = [];
 
@@ -2736,54 +2748,40 @@
 
       try {
         let newData = null;
-
-        // 1. ดึงรายการงานทั้งหมดจาก Sheet แรก (Master Sheet) ตลอดเวลา เพื่อให้ได้งานใหม่ล่าสุดเสมอ
-        const sheet1Url = https://docs.google.com/spreadsheets/d/1gB2vq-JhUTgFbOSanF_jAwnzNndzKtYRgFXdEiN8lKU/export?format=csv&gid=0&_t=;
-        try {
-          const res = await fetch(sheet1Url, { 
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-          });
-          if (res.ok) {
-            const csvText = await res.text();
-            if (csvText.length >= 1000) {
-              newData = parseAndProcessSheetCSV(csvText);
-              console.log([Sync] ดึงข้อมูล Master จาก Sheet แรกสำเร็จ:  งาน);
-            }
-          }
-        } catch(errSheet1) {
-          console.warn('[Sync] ดึงข้อมูลจาก Sheet แรกไม่สำเร็จ:', errSheet1);
-        }
-
-        // 2. ดึงข้อมูลการแก้ไข (สถานะหน้างาน, ผู้รับผิดชอบ, JOB NO., ผรม., หมายเหตุ) จาก Sheet ที่สอง (2-Way Sync)
         const gasUrl = getGasUrl();
+
+        // 1. ดึงข้อมูลสดผ่าน Google Apps Script (ผสานงานทั้งหมดจาก Master Sheet 1 + สถานะจาก Sheet 2 แบบ Realtime)
         if (gasUrl) {
           try {
-            const sep = gasUrl.includes('?') ? '&' : '?';
-            const gasRes = await fetch(${gasUrl}action=getData&_t=);
+            const sep = gasUrl.indexOf('?') !== -1 ? '&' : '?';
+            const gasRes = await fetch(gasUrl + sep + 'action=getData&_t=' + Date.now());
             if (gasRes.ok) {
               const gasJson = await gasRes.json();
-              if (gasJson.status === 'success' && Array.isArray(gasJson.data) && gasJson.data.length > 0) {
-                if (newData) {
-                  // นำข้อมูลการแก้ไขจาก Sheet สอง มาประกบเข้ากับงานจาก Sheet แรก
-                  applyGasEditsToJobs(newData, gasJson.data);
-                  console.log(\[Sync] ประกบข้อมูลแก้ไขจาก Sheet 2 (\ รายการ) เข้ากับ Sheet 1 สำเร็จ!\);
-                } else {
-                  // หาก Sheet แรกเชื่อมต่อไม่ได้ ให้ใช้ข้อมูลจาก Sheet 2 เป็นข้อมูลหลัก
-                  newData = processGasSheetData(gasJson.data, gasJson.last_synced);
-                  console.log(\[Sync] ใช้ข้อมูลสำรองจาก Sheet 2: \ งาน\);
-                }
+              if (gasJson && gasJson.status === 'success' && Array.isArray(gasJson.data) && gasJson.data.length > 0) {
+                newData = processGasSheetData(gasJson.data, gasJson.last_synced);
+                console.log('[Sync] ดึงข้อมูลสดสำเร็จ: ' + newData.all_pending_jobs.length + ' งานคงค้าง');
               }
             }
           } catch(errGas) {
-            console.warn('[Sync] ดึงข้อมูลแก้ไขจาก Sheet 2 ไม่สำเร็จ:', errGas);
+            console.warn('[Sync] เชื่อมต่อ Web App ไม่สำเร็จ กำลังใช้โหมดสำรอง:', errGas);
           }
+        }
+
+        // 2. โหมดสำรอง: หากไม่มี Web App ให้ดึงตรงจาก Master Sheet 1 CSV
+        if (!newData) {
+          const sheet1Url = 'https://docs.google.com/spreadsheets/d/1gB2vq-JhUTgFbOSanF_jAwnzNndzKtYRgFXdEiN8lKU/export?format=csv&gid=0&_t=' + Date.now();
+          const res = await fetch(sheet1Url);
+          if (!res.ok) throw new Error('Google Sheets ตอบกลับรหัส ' + res.status);
+          const csvText = await res.text();
+          if (!csvText || csvText.length < 1000) throw new Error('ข้อมูลที่ได้รับมีขนาดเล็กผิดปกติ');
+          newData = parseAndProcessSheetCSV(csvText);
         }
 
         if (!newData) {
           if (appData) newData = appData;
           else throw new Error('ไม่สามารถดึงข้อมูลจาก Google Sheets ได้');
         }
+
         appData = newData;
         mergeCustomEdits();
         populateTechnicianOptions();
@@ -2797,17 +2795,17 @@
         renderTaskList();
         renderExcelTable();
 
-        // 3. Save to localStorage
+        // 3. บันทึกลง localStorage สำรองไว้
         try {
           localStorage.setItem('GBH_LIVE_DASHBOARD_DATA', JSON.stringify(appData));
         } catch(e) {}
 
-        // 4. Notify local server if running in background to update files on disk too
+        // 4. แจ้งเตือน server ถ้าทำงานในเครื่อง
         try {
           fetch('/api/sync', { method: 'POST', cache: 'no-store' });
         } catch(e) {}
 
-        const timeStr = newData.last_synced;
+        const timeStr = newData.last_synced || new Date().toLocaleTimeString('th-TH');
         const timeHeader = document.getElementById('headerLastUpdated');
         if (timeHeader) {
           timeHeader.textContent = timeStr;
@@ -2817,11 +2815,11 @@
 
         showSyncSuccess('อัปเดตข้อมูลจากชีตสำเร็จ!', newData.all_pending_jobs.length);
         if (!isAutoOnLoad) {
-          showToast(`✅ ซิงค์ข้อมูลสดสำเร็จ! พบ ${newData.all_pending_jobs.length} งานคงค้าง (${timeStr})`);
+          showToast('✅ ซิงค์ข้อมูลสดสำเร็จ! พบ ' + newData.all_pending_jobs.length + ' งานคงค้าง (' + timeStr + ')');
         }
 
       } catch (err) {
-        console.warn('Direct Google Sheet fetch failed, trying local server:', err);
+        console.warn('Sync failed:', err);
         let fallbackSuccess = false;
         try {
           const sRes = await fetch('/api/sync', { method: 'POST', cache: 'no-store' });
