@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบติดตามงานซ่อมคงค้าง - ช่างเจ | AESCON Maintenance GBH</title>
+  <title>ระบบติดตามงานซ่อมคงค้าง - งานระบบ | AESCON Maintenance GBH</title>
   <!-- Google Fonts: Prompt & Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,7 +85,7 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold tracking-tight text-white">Dashboard งานซ่อมคงค้าง - <span id="headerTechName" class="text-sky-300">ช่างเจ</span></h1>
+            <h1 class="text-xl font-bold tracking-tight text-white">Dashboard งานซ่อมคงค้าง - <span id="headerTechName" class="text-sky-300">งานระบบ</span></h1>
             <span class="bg-amber-400/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-400/40">Global House / AESCON</span>
           </div>
           <p class="text-xs text-sky-200/70 mt-0.5">ระบบติดตามสถานะงานซ่อมรายจังหวัด แยกตามหมวดหมู่และเลขแจ้งซ่อม</p>
@@ -98,7 +98,7 @@
         <div class="flex items-center gap-1.5 bg-slate-800/95 border border-slate-700/80 rounded-lg px-2.5 py-1.5 shadow-sm">
           <span class="text-xs text-slate-300 font-medium flex items-center gap-1">
             <span>📋 ช่างใน Sheet:</span>
-            <b id="activeSheetTechBadge" class="text-sky-300 font-bold">ช่างเจ</b>
+            <b id="activeSheetTechBadge" class="text-sky-300 font-bold">งานระบบ</b>
           </span>
           <button type="button" id="btnToggleSheetTech" onclick="toggleSheetTechDropdown()" 
             class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-0.5 rounded border border-slate-600 transition flex items-center gap-1 active:scale-95"
@@ -109,6 +109,7 @@
           <div id="sheetTechDropdownWrapper" class="hidden items-center pl-1.5 border-l border-slate-600">
             <select id="technicianSelectHeader" onchange="onSelectTechnician(this.value)" 
               class="bg-slate-900 text-sky-300 font-bold text-xs rounded px-2 py-0.5 border border-sky-400 focus:outline-none cursor-pointer">
+              <option value="งานระบบ">งานระบบ</option>
               <option value="ช่างเจ">ช่างเจ</option>
               <option value="all">ช่างทั้งหมด</option>
             </select>
@@ -127,6 +128,30 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
           <span>นำเข้าไฟล์ในเครื่อง</span>
+        </button>
+
+        <!-- GlobalData Link Button -->
+        <a href="https://sglobaldata.sg4.quickconnect.to/" target="_blank" rel="noopener noreferrer" 
+           class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm border border-amber-400/40 active:scale-95" 
+           title="เปิดระบบคลังข้อมูล GlobalData (QuickConnect)">
+          <svg class="w-4 h-4 text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          <span>GlobalData</span>
+          <svg class="w-3 h-3 text-amber-200/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+
+        <!-- 2-Way Google Sheet Sync Setup Button -->
+        <button type="button" onclick="openGasModal()" id="btnGasSettings"
+          class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow-sm border border-emerald-400/50 active:scale-95" 
+          title="ตั้งค่าเชื่อมต่อ Google Sheet สองทาง (ให้เพื่อนทุกคนเห็นอัปเดตตรงกัน)">
+          <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span id="gasBtnLabel">ซิงค์ 2 ทาง (Google Sheet)</span>
+          <span id="gasConnectedDot" class="w-2 h-2 rounded-full bg-emerald-400 hidden animate-pulse"></span>
         </button>
 
         <button id="btnSync" onclick="triggerSync()" class="bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm border border-sky-400/40 active:scale-95">
@@ -252,7 +277,7 @@
 
       <!-- Quick context notice on right side of tab bar -->
       <div class="flex items-center gap-2 text-xs text-slate-500">
-        <span id="tabContextNotice">แสดงงานของ: <b id="tabTechBadge" class="text-sky-700 font-bold">ช่างเจ</b></span>
+        <span id="tabContextNotice">แสดงงานของ: <b id="tabTechBadge" class="text-sky-700 font-bold">งานระบบ</b></span>
       </div>
     </div>
 
@@ -268,7 +293,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-base font-bold text-slate-800">แผนที่ประเทศไทย (77 จังหวัด)</span>
-                <span id="mapTechBadge" class="text-xs bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full font-semibold border border-sky-200">งานช่างเจ</span>
+                <span id="mapTechBadge" class="text-xs bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full font-semibold border border-sky-200">งานระบบ</span>
               </div>
               <button onclick="resetSelectedProvince()" class="text-xs text-sky-600 hover:text-sky-800 font-medium flex items-center gap-1">
                 <span>แสดงทุกจังหวัด</span>
@@ -372,7 +397,7 @@
                 </div>
                 <!-- Interactive Branch Pills Container -->
                 <div id="branchPillsContainer" class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                  <span class="text-xs text-slate-500">สาขา: แสดงงานค้างทุกสาขาของช่างเจ</span>
+                  <span class="text-xs text-slate-500" id="mapBranchSubNotice">สาขา: แสดงงานค้างทุกสาขาของงานระบบ</span>
                 </div>
               </div>
             </div>
@@ -395,13 +420,14 @@
                 <span>ช่างใน Sheet:</span>
               </label>
               <div id="tab1TechBadgeWrapper" class="flex items-center gap-1.5 w-full">
-                <span id="tab1ActiveTechBadge" class="text-xs font-bold px-2.5 py-1.5 bg-sky-50 text-sky-800 border border-sky-200 rounded-lg flex-1 truncate">ช่างเจ</span>
+                <span id="tab1ActiveTechBadge" class="text-xs font-bold px-2.5 py-1.5 bg-sky-50 text-sky-800 border border-sky-200 rounded-lg flex-1 truncate">งานระบบ</span>
                 <button type="button" onclick="toggleTab1TechSelect()" id="btnToggleTab1Tech" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-lg border border-slate-300 font-semibold transition" title="คลิกเพื่อปลดล็อก/เปลี่ยนช่างจาก Sheet">
                   🔒
                 </button>
               </div>
               <select id="technicianSelect" onchange="onSelectTechnician(this.value)" 
                 class="hidden w-full px-3 py-1.5 bg-white border border-sky-400 rounded-lg text-xs font-bold text-sky-950 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition cursor-pointer shadow-sm">
+                <option value="งานระบบ">งานระบบ</option>
                 <option value="ช่างเจ">ช่างเจ</option>
                 <option value="all">ช่างทั้งหมด</option>
               </select>
@@ -611,6 +637,107 @@
   </main>
 
   
+  <!-- MODAL: GOOGLE APPS SCRIPT 2-WAY SYNC SETTINGS -->
+  <div id="gasModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden transition-opacity">
+    <div class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white p-4 sm:px-6 flex items-center justify-between border-b border-sky-800/40">
+        <div class="flex items-center gap-3">
+          <span class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 font-bold text-lg">
+            🔄
+          </span>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">เชื่อมต่อ Google Sheet สองทาง (2-Way Sync)</h3>
+              <span id="gasModalStatusBadge" class="text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40">ยังไม่ได้เชื่อมต่อ</span>
+            </div>
+            <p class="text-xs text-sky-200/80 mt-0.5">ให้เพื่อนๆ ใน GitHub เห็นข้อมูลอัปเดตตรงกันแบบเรียลไทม์</p>
+          </div>
+        </div>
+        <button onclick="closeGasModal()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex flex-col gap-4 text-xs bg-slate-50/50">
+        
+        <div class="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-blue-900 flex flex-col gap-1.5 leading-relaxed">
+          <span class="font-bold flex items-center gap-1.5 text-blue-950">
+            <span>💡</span> ทำไมเพื่อนใน GitHub ถึงไม่เห็นข้อมูลที่เราอัปเดต?
+          </span>
+          <p class="text-slate-600">
+            เนื่องจาก GitHub Pages เป็นเว็บแบบไฟล์นิ่ง (Static Hosting) เมื่อกดบันทึก ข้อมูลจึงอยู่เฉพาะในเครื่องของเราคนเดียว หากต้องการให้เพื่อนๆ ทุกคนที่เปิดลิงก์เห็นข้อมูลอัปเดตตรงกัน และสามารถแก้ไขสถานะได้ทั้งในหน้าเว็บและใน Google Sheet ให้เชื่อมต่อผ่าน Google Apps Script ตามขั้นตอนง่ายๆ ด้านล่างนี้ครับ:
+          </p>
+        </div>
+
+        <!-- 3 Simple Setup Steps -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-3">
+          <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wide flex items-center gap-2 border-b border-slate-100 pb-2">
+            <span>📋 ขั้นตอนการเชื่อมต่อ (ทำเพียงครั้งเดียว):</span>
+          </h4>
+
+          <div class="flex flex-col gap-3">
+            <div class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 font-bold flex items-center justify-center shrink-0 text-[11px]">1</span>
+              <div>
+                <b class="text-slate-800">สร้าง Google Sheet ของทีม:</b>
+                <p class="text-slate-500 mt-0.5">เปิด <a href="https://sheets.new" target="_blank" class="text-sky-600 font-bold underline hover:text-sky-700">sheets.new</a> แล้วนำเข้าไฟล์ <b>"ตารางงานทั้งหมด_สำหรับGoogleSheet.xlsx"</b> ที่เตรียมไว้ให้ในโฟลเดอร์</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 font-bold flex items-center justify-center shrink-0 text-[11px]">2</span>
+              <div>
+                <b class="text-slate-800">ใส่โค้ดใน Apps Script:</b>
+                <p class="text-slate-500 mt-0.5">ใน Google Sheet ไปที่เมนู <b>ส่วนขยาย (Extensions) > Apps Script</b> แล้วคัดลอกโค้ดจากไฟล์ <b>google_apps_script.js</b> ไปวางแทนที่ทั้งหมดแล้วกดบันทึก</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 font-bold flex items-center justify-center shrink-0 text-[11px]">3</span>
+              <div>
+                <b class="text-slate-800">Deploy เป็น Web App:</b>
+                <p class="text-slate-500 mt-0.5">กดปุ่ม <b>Deploy (ทำให้ใช้งานได้) > New deployment</b> เลือก <b>Web app</b> กำหนด Who has access เป็น <b>Anyone (ทุกคน)</b> แล้วคัดลอก URL ของเว็บแอปมาวางในช่องด้านล่างนี้</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input for Web App URL -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-2">
+          <label class="font-bold text-slate-800 flex items-center justify-between">
+            <span>🔗 URL เว็บแอป Google Apps Script (Web App URL):</span>
+            <span class="text-[11px] text-slate-400 font-normal">ลงท้ายด้วย /exec</span>
+          </label>
+          <input type="url" id="inputGasUrl" 
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-sky-950 focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+            placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+          <p class="text-[11px] text-slate-500">
+            เมื่อเชื่อมต่อแล้ว ทุกครั้งที่มีการแก้ไขบนเว็บ ข้อมูลจะอัปเดตลง Google Sheet ทันที และเมื่อมีการแก้ไขใน Google Sheet หน้าเว็บก็จะอัปเดตให้อัตโนมัติ เพื่อนๆ ทุกคนจะเห็นตรงกัน 100%!
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 sm:px-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
+        <a href="ตารางงานทั้งหมด_สำหรับGoogleSheet.xlsx" download class="text-sky-700 hover:text-sky-900 font-semibold text-xs flex items-center gap-1">
+          <span>📥 ดาวน์โหลดตารางงานสำหรับชีต (.xlsx)</span>
+        </a>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeGasModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold transition">
+            ปิด
+          </button>
+          <button type="button" onclick="saveGasSettings()" class="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-sm active:scale-95 flex items-center gap-1.5">
+            <span>💾 บันทึกและเชื่อมต่อ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: AUTO-SYNC / UPDATE FROM SHEET POPUP -->
   <div id="syncModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300">
     <div class="bg-white rounded-3xl shadow-2xl border border-sky-100 p-6 sm:p-8 max-w-sm w-full flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95 duration-200">
@@ -681,16 +808,24 @@
         
         <!-- Job Details Grid from Documents (กรอบข้อมูลจาก Documents) -->
         <div class="bg-white p-4 sm:p-5 rounded-xl border-2 border-slate-300 shadow-sm flex flex-col gap-3.5">
-          <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2.5 flex-wrap gap-2">
             <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
               <span class="w-6 h-6 rounded-lg bg-sky-100 border border-sky-300/80 flex items-center justify-center text-sky-700 text-xs">
                 📄
               </span>
               <span>ข้อมูลจาก Documents</span>
             </h4>
-            <span class="text-[11px] bg-slate-100 text-slate-600 font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
-              เอกสารแจ้งซ่อมต้นทาง
-            </span>
+            <div class="flex items-center gap-2">
+              <a href="https://sglobaldata.sg4.quickconnect.to/" target="_blank" rel="noopener noreferrer" 
+                 class="inline-flex items-center gap-1.5 text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300/80 px-2.5 py-0.5 rounded-lg font-bold transition shadow-2xs hover:scale-102" 
+                 title="เปิดคลังข้อมูลเอกสารแนบ GlobalData (QuickConnect)">
+                <span>📁 GlobalData</span>
+                <svg class="w-3 h-3 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
+              <span class="text-[11px] bg-slate-100 text-slate-600 font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
+                เอกสารแจ้งซ่อมต้นทาง
+              </span>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -886,7 +1021,12 @@
     };
 
     let appData = null;
-    let selectedTechnician = localStorage.getItem('GBH_SELECTED_TECH') || 'ช่างเจ'; // Remembers last selected tech, default 'ช่างเจ'
+    let storedTech = localStorage.getItem('GBH_SELECTED_TECH');
+    if (!storedTech || storedTech === 'ช่างเจ') {
+      storedTech = 'งานระบบ';
+      try { localStorage.setItem('GBH_SELECTED_TECH', 'งานระบบ'); } catch(e){}
+    }
+    let selectedTechnician = storedTech; // Default 'งานระบบ'
     let selectedProvince = null;  // null = all provinces
     let selectedZone = 'all';      // 'all' or 'เขต 1-1', 'เขต 1-2', etc.
     let selectedBranch = 'all';    // 'all' or specific branch name
@@ -959,7 +1099,7 @@
       });
 
       // Filter and sort technicians strictly from sheet
-      const priorityOrder = ['ช่างเจ', 'งานระบบ'];
+      const priorityOrder = ['งานระบบ', 'ช่างเจ'];
       const otherTechs = Object.keys(techCounts)
         .filter(t => !priorityOrder.includes(t))
         .sort((a, b) => techCounts[b] - techCounts[a]);
@@ -967,10 +1107,9 @@
       const totalAll = appData.all_pending_jobs.length;
 
       let html = '';
-      html += `<option value="ช่างเจ">ช่างเจ (${jayCount} งาน) [ค่าเริ่มต้น]</option>`;
-      if (techCounts['งานระบบ']) {
-        html += `<option value="งานระบบ">งานระบบ (${techCounts['งานระบบ']} งาน)</option>`;
-      }
+      const sysCount = techCounts['งานระบบ'] || 0;
+      html += `<option value="งานระบบ">งานระบบ (${sysCount} งาน) [ค่าเริ่มต้น]</option>`;
+      html += `<option value="ช่างเจ">ช่างเจ (${jayCount} งาน)</option>`;
       html += `<option value="all">ช่างทั้งหมด (${totalAll} งาน)</option>`;
 
       otherTechs.forEach(t => {
@@ -997,7 +1136,7 @@
       if (tab1Badge) tab1Badge.textContent = techDisplay;
 
       const mTechBadge = document.getElementById('mapTechBadge');
-      if (mTechBadge) mTechBadge.textContent = (selectedTechnician === 'all' ? 'งานช่างทั้งหมด' : `งาน${selectedTechnician}`);
+      if (mTechBadge) mTechBadge.textContent = (selectedTechnician === 'all' ? 'งานช่างทั้งหมด' : (selectedTechnician.startsWith('งาน') ? selectedTechnician : `งาน${selectedTechnician}`));
     }
 
     function onSelectTechnician(val) {
@@ -1018,7 +1157,7 @@
       if (tab1Badge) tab1Badge.textContent = techDisplay;
 
       const mTechBadge = document.getElementById('mapTechBadge');
-      if (mTechBadge) mTechBadge.textContent = (val === 'all' ? 'งานช่างทั้งหมด' : `งาน${val}`);
+      if (mTechBadge) mTechBadge.textContent = (val === 'all' ? 'งานช่างทั้งหมด' : (val.startsWith('งาน') ? val : `งาน${val}`));
 
       try {
         localStorage.setItem('GBH_SELECTED_TECH', val);
@@ -1105,6 +1244,9 @@
 
       // Initialize Excel table count badge
       renderExcelTable();
+
+      // Initialize 2-way sync header status
+      updateGasHeaderStatus();
 
       // Automatically trigger update from Google Sheet with popup on file open
       openSyncModal('กำลังอัปเดตข้อมูลจากชีต...', 'ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมสดจาก Google Sheet แบบเรียลไทม์ กรุณารอสักครู่');
@@ -1865,7 +2007,7 @@
             <!-- Card Footer: Responsible & Contractor & Site Status -->
             <div class="flex flex-wrap items-center justify-between gap-2 pt-1.5 text-xs border-t border-slate-50">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-slate-500 text-[11px]">ผู้รับผิดชอบ: <b class="text-slate-800">${job.custom_responsible || job.responsible || 'ช่างเจ'}</b></span>
+                <span class="text-slate-500 text-[11px]">ผู้รับผิดชอบ: <b class="text-slate-800">${job.custom_responsible || job.responsible || 'งานระบบ'}</b></span>
                 ${contractorTag}
                 ${siteStatusTag}
               </div>
@@ -2027,6 +2169,31 @@
         });
       } catch(err) {
         // Standalone offline mode, no server running is fine!
+      }
+
+      // Send update live to Google Sheet via Google Apps Script (2-Way Realtime Sync)
+      const gasUrl = getGasUrl();
+      if (gasUrl) {
+        try {
+          fetch(gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'updateJob',
+              no: activeJob.no,
+              job_no: jobNo,
+              responsible: resp,
+              contractor: contractor,
+              site_status: siteStat,
+              contact: contact,
+              notes: notes
+            })
+          });
+          showToast('☁️ ซิงค์ข้อมูลลง Google Sheet ให้ทุกคนเรียบร้อย!');
+        } catch(e) {
+          console.warn('GAS POST failed:', e);
+        }
       }
 
       showToast('บันทึกข้อมูล ผรม. และผู้รับผิดชอบ เรียบร้อยแล้ว!');
@@ -2296,6 +2463,142 @@
 
     // Sync from Google Sheet (Direct Live + Server fallback)
     // =========================================================================
+        // =========================================================================
+    // 2-WAY SYNC GOOGLE APPS SCRIPT WEB APP INTEGRATION
+    // =========================================================================
+    window.DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzIdyayOacmo8MCIKVAVEXGyPyLd-IX50tkRnqJORRq3ZOuBOTaXPuoeWfPdqfBXmwyMw/exec'; // Default Web App URL if embedded
+
+    function getGasUrl() {
+      const stored = (localStorage.getItem('GBH_GAS_URL') || '').trim();
+      if (stored) return stored;
+      return (window.DEFAULT_GAS_URL || '').trim();
+    }
+
+    function openGasModal() {
+      const modal = document.getElementById('gasModal');
+      const input = document.getElementById('inputGasUrl');
+      const badge = document.getElementById('gasModalStatusBadge');
+      if (!modal) return;
+
+      const currentUrl = getGasUrl();
+      if (input) input.value = currentUrl;
+
+      if (badge) {
+        if (currentUrl) {
+          badge.textContent = 'เชื่อมต่อแล้ว';
+          badge.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/40';
+        } else {
+          badge.textContent = 'ยังไม่ได้เชื่อมต่อ';
+          badge.className = 'text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40';
+        }
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeGasModal() {
+      const modal = document.getElementById('gasModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveGasSettings() {
+      const input = document.getElementById('inputGasUrl');
+      if (!input) return;
+      const url = input.value.trim();
+
+      if (url) {
+        try {
+          localStorage.setItem('GBH_GAS_URL', url);
+        } catch(e) {}
+        showToast('✅ บันทึก URL เชื่อมต่อ Google Sheet สองทางเรียบร้อย!');
+      } else {
+        try {
+          localStorage.removeItem('GBH_GAS_URL');
+        } catch(e) {}
+        showToast('ล้างการเชื่อมต่อ Google Sheet เรียบร้อย (ใช้การดึงข้อมูลตามปกติ)');
+      }
+
+      updateGasHeaderStatus();
+      closeGasModal();
+
+      // Trigger fresh sync immediately
+      performSheetSync(false);
+    }
+
+    function updateGasHeaderStatus() {
+      const url = getGasUrl();
+      const dot = document.getElementById('gasConnectedDot');
+      const label = document.getElementById('gasBtnLabel');
+      if (dot && label) {
+        if (url) {
+          dot.classList.remove('hidden');
+          label.textContent = 'ซิงค์ 2 ทาง (ออนไลน์)';
+        } else {
+          dot.classList.add('hidden');
+          label.textContent = 'ซิงค์ 2 ทาง (Google Sheet)';
+        }
+      }
+    }
+
+    function processGasSheetData(rows, lastSynced) {
+      const allJobs = [];
+      const allPendingJobs = [];
+
+      rows.forEach((r, idx) => {
+        const noRef = String(r.no || '').trim();
+        if (!noRef) return;
+        const branch = String(r.branch || '').trim();
+        const province = String(r.province || '').trim() || mapBranchToProvince(branch);
+        const category = String(r.category || '').trim() || 'ไม่ระบุประเภทงาน';
+        const status = String(r.status || '').trim() || 'รอประเมินBOQ';
+        const responsible = String(r.responsible || '').trim() || 'งานระบบ';
+        const jobId = `job_${idx}_${noRef}_${branch}`.replace(/\s+/g, '_');
+
+        const jobItem = {
+          id: jobId,
+          row_idx: idx,
+          no: noRef,
+          no_num: parseNumForSort(noRef),
+          date: r.date || '',
+          branch: branch,
+          province: province,
+          work_type: category,
+          category: category,
+          nature: r.nature || '',
+          desc: r.desc || '',
+          quotation: r.quotation || '',
+          job_no: r.job_no || '',
+          custom_job_no: r.job_no || '',
+          budget: r.budget || '',
+          tender: r.tender || '',
+          status: status,
+          responsible: responsible,
+          custom_responsible: responsible,
+          operator: r.contractor || '',
+          custom_contractor: r.contractor || '',
+          site_status: r.site_status || '',
+          custom_site_status: r.site_status || '',
+          custom_contact: r.contact || '',
+          remark: r.notes || '',
+          custom_notes: r.notes || '',
+          zone: r.zone || '',
+          is_closed: status.includes('ปิด') || status.includes('ยกเลิก') || status === 'CANCELLED',
+          is_jay: responsible.includes('เจ')
+        };
+
+        allJobs.push(jobItem);
+        if (!jobItem.is_closed) {
+          allPendingJobs.push(jobItem);
+        }
+      });
+
+      return {
+        last_synced: lastSynced || new Date().toLocaleString('th-TH'),
+        all_jobs_count: allJobs.length,
+        all_pending_jobs: allPendingJobs
+      };
+    }
+
     // SYNC MODAL POPUP & AUTO-UPDATE FROM SHEET
     // =========================================================================
     function openSyncModal(title = 'กำลังอัปเดตข้อมูลจากชีต...', desc = 'ระบบกำลังเชื่อมต่อและดึงข้อมูลใบแจ้งซ่อมล่าสุดจาก Google Sheet กรุณารอสักครู่') {
@@ -2370,6 +2673,59 @@
       }, 1800);
     }
 
+        function applyGasEditsToJobs(dataObj, gasRows) {
+      if (!dataObj || !dataObj.all_pending_jobs || !Array.isArray(gasRows)) return;
+      const editMap = new Map();
+      gasRows.forEach(row => {
+        const noKey = String(row.no || '').trim();
+        if (noKey) editMap.set(noKey, row);
+      });
+
+      dataObj.all_pending_jobs.forEach(job => {
+        const noKey = String(job.no || '').trim();
+        if (editMap.has(noKey)) {
+          const ed = editMap.get(noKey);
+          if (ed.job_no !== undefined && ed.job_no !== '') {
+            job.job_no = ed.job_no;
+            job.custom_job_no = ed.job_no;
+          }
+          if (ed.responsible !== undefined && ed.responsible !== '') {
+            job.responsible = ed.responsible;
+            job.custom_responsible = ed.responsible;
+            job.is_jay = ed.responsible.includes('เจ');
+          }
+          if (ed.contractor !== undefined && ed.contractor !== '') {
+            job.operator = ed.contractor;
+            job.custom_contractor = ed.contractor;
+          }
+          if (ed.site_status !== undefined && ed.site_status !== '') {
+            job.site_status = ed.site_status;
+            job.custom_site_status = ed.site_status;
+          }
+          if (ed.contact !== undefined && ed.contact !== '') {
+            job.custom_contact = ed.contact;
+          }
+          if (ed.notes !== undefined && ed.notes !== '') {
+            job.remark = ed.notes;
+            job.custom_notes = ed.notes;
+          }
+
+          if (!customEdits[job.id]) customEdits[job.id] = {};
+          if (job.custom_job_no !== undefined) customEdits[job.id].custom_job_no = job.custom_job_no;
+          if (job.custom_responsible !== undefined) customEdits[job.id].custom_responsible = job.custom_responsible;
+          if (job.custom_contractor !== undefined) customEdits[job.id].custom_contractor = job.custom_contractor;
+          if (job.custom_site_status !== undefined) customEdits[job.id].custom_site_status = job.custom_site_status;
+          if (job.custom_contact !== undefined) customEdits[job.id].custom_contact = job.custom_contact;
+          if (job.custom_notes !== undefined) customEdits[job.id].custom_notes = job.custom_notes;
+          customEdits[job.id].updated_at = ed.updated_at || new Date().toISOString();
+        }
+      });
+      
+      try {
+        localStorage.setItem('GBH_JAY_JOB_EDITS', JSON.stringify(customEdits));
+      } catch(e) {}
+    }
+
     async function performSheetSync(isAutoOnLoad = false) {
       const btn = document.getElementById('btnSync');
       const icon = document.getElementById('syncIcon');
@@ -2379,19 +2735,55 @@
       }
 
       try {
-        // 1. Fetch live directly from Google Sheet (with cache buster timestamp)
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/1gB2vq-JhUTgFbOSanF_jAwnzNndzKtYRgFXdEiN8lKU/export?format=csv&gid=0&_t=${Date.now()}`;
-        const res = await fetch(sheetUrl, { 
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-        });
-        
-        if (!res.ok) throw new Error(`Google Sheets ตอบกลับรหัส ${res.status}`);
-        const csvText = await res.text();
-        if (csvText.length < 1000) throw new Error('ข้อมูลที่ได้รับมีขนาดเล็กผิดปกติ');
+        let newData = null;
 
-        // 2. Parse and build complete fresh data structure
-        const newData = parseAndProcessSheetCSV(csvText);
+        // 1. ดึงรายการงานทั้งหมดจาก Sheet แรก (Master Sheet) ตลอดเวลา เพื่อให้ได้งานใหม่ล่าสุดเสมอ
+        const sheet1Url = https://docs.google.com/spreadsheets/d/1gB2vq-JhUTgFbOSanF_jAwnzNndzKtYRgFXdEiN8lKU/export?format=csv&gid=0&_t=;
+        try {
+          const res = await fetch(sheet1Url, { 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+          });
+          if (res.ok) {
+            const csvText = await res.text();
+            if (csvText.length >= 1000) {
+              newData = parseAndProcessSheetCSV(csvText);
+              console.log([Sync] ดึงข้อมูล Master จาก Sheet แรกสำเร็จ:  งาน);
+            }
+          }
+        } catch(errSheet1) {
+          console.warn('[Sync] ดึงข้อมูลจาก Sheet แรกไม่สำเร็จ:', errSheet1);
+        }
+
+        // 2. ดึงข้อมูลการแก้ไข (สถานะหน้างาน, ผู้รับผิดชอบ, JOB NO., ผรม., หมายเหตุ) จาก Sheet ที่สอง (2-Way Sync)
+        const gasUrl = getGasUrl();
+        if (gasUrl) {
+          try {
+            const sep = gasUrl.includes('?') ? '&' : '?';
+            const gasRes = await fetch(${gasUrl}action=getData&_t=);
+            if (gasRes.ok) {
+              const gasJson = await gasRes.json();
+              if (gasJson.status === 'success' && Array.isArray(gasJson.data) && gasJson.data.length > 0) {
+                if (newData) {
+                  // นำข้อมูลการแก้ไขจาก Sheet สอง มาประกบเข้ากับงานจาก Sheet แรก
+                  applyGasEditsToJobs(newData, gasJson.data);
+                  console.log(\[Sync] ประกบข้อมูลแก้ไขจาก Sheet 2 (\ รายการ) เข้ากับ Sheet 1 สำเร็จ!\);
+                } else {
+                  // หาก Sheet แรกเชื่อมต่อไม่ได้ ให้ใช้ข้อมูลจาก Sheet 2 เป็นข้อมูลหลัก
+                  newData = processGasSheetData(gasJson.data, gasJson.last_synced);
+                  console.log(\[Sync] ใช้ข้อมูลสำรองจาก Sheet 2: \ งาน\);
+                }
+              }
+            }
+          } catch(errGas) {
+            console.warn('[Sync] ดึงข้อมูลแก้ไขจาก Sheet 2 ไม่สำเร็จ:', errGas);
+          }
+        }
+
+        if (!newData) {
+          if (appData) newData = appData;
+          else throw new Error('ไม่สามารถดึงข้อมูลจาก Google Sheets ได้');
+        }
         appData = newData;
         mergeCustomEdits();
         populateTechnicianOptions();
@@ -2507,7 +2899,7 @@
         'BUDGET (THB)': j.budget || '',
         'TENDER (THB)': j.tender || '',
         'สถานะ (STATUS)': j.status || '',
-        'ผู้รับผิดชอบ': j.custom_responsible || j.responsible || 'ช่างเจ',
+        'ผู้รับผิดชอบ': j.custom_responsible || j.responsible || 'งานระบบ',
         'ชื่อ ผรม. ที่เข้าดำเนินการ': j.custom_contractor || j.operator || '',
         'สถานะหน้างาน': j.custom_site_status || j.site_status || '',
         'ช่องทางติดต่อ ผรม.': j.custom_contact || '',
@@ -2954,6 +3346,28 @@
           body: JSON.stringify({ jobId, editData: customEdits[jobId] })
         });
       } catch(err) {}
+
+      // Send update live to Google Sheet via Google Apps Script (2-Way Realtime Sync)
+      const gasUrl = getGasUrl();
+      if (gasUrl) {
+        try {
+          fetch(gasUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'updateJob',
+              no: job.no,
+              job_no: job.custom_job_no || job.job_no || '',
+              responsible: newResp,
+              contractor: job.custom_contractor || job.contractor || '',
+              site_status: job.custom_site_status || job.site_status || '',
+              contact: job.custom_contact || job.contractor_contact || '',
+              notes: job.custom_notes || job.notes || ''
+            })
+          });
+        } catch(e) {}
+      }
 
       showToast(`✅ บันทึกผู้รับผิดชอบ No. ${job.no} เป็น "${newResp}" เรียบร้อยแล้ว`);
       renderKPIs();
